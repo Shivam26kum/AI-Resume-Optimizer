@@ -30,8 +30,8 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
-    '[https://ai-resume-optimizer-beta-six.vercel.app](https://ai-resume-optimizer-beta-six.vercel.app)',
-    '[https://ai-resume-optimizer-inky.vercel.app](https://ai-resume-optimizer-inky.vercel.app)',
+    'https://ai-resume-optimizer-beta-six.vercel.app',
+    'https://ai-resume-optimizer-inky.vercel.app',
     process.env.CLIENT_ORIGIN
   ];
 
@@ -153,12 +153,16 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       generationConfig: { responseMimeType: "application/json" }
     });
 
+    // Clean inputs of troublesome line breaks and unescaped quotes
+    const cleanResume = resumeText.replace(/["\\\r\n]/g, ' ');
+    const cleanJD = jobDescription.replace(/["\\\r\n]/g, ' ');
+
     const prompt = `
       You are an elite corporate recruiter and ATS optimization algorithm. 
       Analyze the following Resume against the given Job Description.
       
-      Resume Text: "${resumeText.replace(/"/g, '\\"')}"
-      Job Description: "${jobDescription.replace(/"/g, '\\"')}"
+      Resume Text: "${cleanResume}"
+      Job Description: "${cleanJD}"
       
       You MUST respond with a valid JSON object matching the exact structure below. 
       CRITICAL RULE FOR "currentText": This field MUST contain the EXACT, LITERAL, WORD-FOR-WORD substring taken directly from the provided Resume text that you intend to optimize. Do not paraphrase, alter punctuation, or summarize the original text in the "currentText" field, otherwise string replacement engines will break.
@@ -182,7 +186,6 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
     const result = await model.generateContent(prompt);
     let responseText = result.response.text().trim();
     
-    // FIX: Highly resilient extraction parser that targets ONLY structural JSON brackets
     const jsonStartIndex = responseText.indexOf('{');
     const jsonEndIndex = responseText.lastIndexOf('}');
     
@@ -202,7 +205,7 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
     }
 
     // 2. Safe Fallback Properties Injector
-    const savedScan = await Scan.create({
+    const scanPayload = {
       userId: req.user._id, 
       fileName: file.originalname || 'Resume.pdf',
       jobDescription: jobDescription,
@@ -213,9 +216,15 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       weaknesses: Array.isArray(analysisResult.weaknesses) ? analysisResult.weaknesses : [],
       missingKeywords: Array.isArray(analysisResult.missingKeywords) ? analysisResult.missingKeywords : [],
       actionableImprovements: Array.isArray(analysisResult.actionableImprovements) ? analysisResult.actionableImprovements : []
-    });
+    };
 
-    return res.json(savedScan);
+    try {
+      const savedScan = await Scan.create(scanPayload);
+      return res.json(savedScan);
+    } catch (dbError) {
+      console.error("Mongoose Scan Insertion Crash Log:", dbError);
+      return res.status(500).json({ error: 'Database pipeline failed to record entry validation logs.' });
+    }
   } catch (error) {
     console.error("Pipeline Exception Failure:", error);
     return res.status(500).json({ error: 'Internal system engine fault occurred during data mapping.' });
