@@ -1,0 +1,228 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import multer from 'multer';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import connectDB from './db.js';
+import Scan from './models/Scan.js';
+import User from './models/User.js';
+import { protect } from './middleware/auth.js';
+
+// Setup old CommonJS require bridge globally at the top level
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
+
+dotenv.config();
+
+// Connect to MongoDB Cloud Atlas
+connectDB();
+
+const app = express();
+
+<<<<<<< HEAD
+// Secure CORS policy whitelisting configuration for local development and production
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://your-frontend-name.vercel.app' // Change this to your live Vercel domain link!
+=======
+// Modern CORS policy configuration whitelisting local workspace and live Vercel deployments
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://ai-resume-optimizer-beta-six.vercel.app'
+>>>>>>> c32363e (authentication solve)
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json());
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+// Safe initialization of Gemini API client
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Helper function to generate signed JWTs
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+};
+
+// ==========================================
+// AUTHENTICATION ROUTE: USER REGISTRATION
+// ==========================================
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Please enter all registration fields' });
+    }
+
+    const userExists = await User.findOne({ $or: [{ email }, { username }] });
+    if (userExists) {
+      return res.status(400).json({ error: 'Username or Email identity already registered' });
+    }
+
+    // Encrypt password securely using bcrypt
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await User.create({ username, email, password: hashedPassword });
+
+    return res.status(201).json({
+      token: generateToken(user._id),
+      username: user.username
+    });
+  } catch (error) {
+    console.error("Registration Failure:", error);
+    return res.status(500).json({ error: 'Server authentication initialization fault' });
+  }
+});
+
+// ==========================================
+// AUTHENTICATION ROUTE: USER LOGIN
+// ==========================================
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ error: 'Invalid email credentials' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ error: 'Invalid password credentials' });
+
+    return res.json({
+      token: generateToken(user._id),
+      username: user.username
+    });
+  } catch (error) {
+    console.error("Login Failure:", error);
+    return res.status(500).json({ error: 'Server validation sequence failure' });
+  }
+});
+
+// ==========================================
+// RUN RESUME ANALYSIS (PROTECTED WITH AUTH)
+// ==========================================
+app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
+  try {
+    const { jobDescription } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: 'Please upload a resume file' });
+    }
+    if (!jobDescription) {
+      return res.status(400).json({ error: 'Please provide a target job description' });
+    }
+
+    // Parse the PDF text contents safely using the buffer array
+    const pdfData = await pdfParse(file.buffer);
+    const resumeText = pdfData.text;
+
+    if (!resumeText.trim()) {
+      return res.status(400).json({ error: 'Failed to extract text content from the uploaded PDF resume' });
+    }
+
+    // Leverage modern gemini-2.5-flash constraints to enforce native JSON outputs
+    const model = ai.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const prompt = `
+      You are an elite corporate recruiter and ATS optimization algorithm. 
+      Analyze the following Resume against the given Job Description.
+      
+      Resume Text: "${resumeText}"
+      Job Description: "${jobDescription}"
+      
+      You MUST respond with a valid JSON object matching the exact structure below. 
+      CRITICAL RULE FOR "currentText": This field MUST contain the EXACT, LITERAL, WORD-FOR-WORD substring taken directly from the provided Resume text that you intend to optimize. Do not paraphrase, alter punctuation, or summarize the original text in the "currentText" field, otherwise string replacement engines will break.
+
+      {
+        "matchPercentage": 85,
+        "summary": "Provide a comprehensive, professional summary explaining the resume's match status against the target profile.",
+        "strengths": ["list item 1", "list item 2"],
+        "weaknesses": ["list item 1", "list item 2"],
+        "missingKeywords": ["keyword1", "keyword2"],
+        "actionableImprovements": [
+          { 
+            "section": "Experience", 
+            "currentText": "exact weak bullet point text from resume string", 
+            "suggestedText": "optimized bullet point incorporating action verbs and metrics" 
+          }
+        ]
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    let responseText = result.response.text().trim();
+    
+    // Completely bulletproof boundary cleaning using strict regex matching
+    responseText = responseText.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+
+    // Parse data cleanly into structural runtime notation
+    let analysisResult;
+    try {
+      analysisResult = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("JSON Parsing failed. Raw AI text dump was:", responseText);
+      return res.status(500).json({ error: 'AI engine generated a malformed schema block. Please run analysis again.' });
+    }
+
+    // Save scan data document linked straight to your verified user profile instance ID
+    const savedScan = await Scan.create({
+      userId: req.user.id,
+      fileName: file.originalname,
+      jobDescription: jobDescription,
+      resumeRawText: resumeText, // Saves the true raw source text mapping configuration
+      ...analysisResult 
+    });
+
+    return res.json(savedScan);
+  } catch (error) {
+    console.error("Pipeline Exception Failure:", error);
+    return res.status(500).json({ error: 'Internal pipeline processing fault occurred' });
+  }
+});
+
+// ==========================================
+// GET HISTORY LIST (PROTECTED FOR RELEVANT USER ONLY)
+// ==========================================
+app.get('/api/history', protect, async (req, res) => {
+  try {
+    const history = await Scan.find({ userId: req.user.id })
+                              .sort({ createdAt: -1 })
+                              .select('fileName matchPercentage createdAt summary'); 
+    return res.json(history);
+  } catch (error) {
+    console.error("Fetch History Error:", error);
+    return res.status(500).json({ error: 'Failed to access structural tracking index' });
+  }
+});
+
+// ==========================================
+// GET SPECIFIC RECORD DETAILS (PROTECTED)
+// ==========================================
+app.get('/api/history/:id', protect, async (req, res) => {
+  try {
+    const scan = await Scan.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!scan) return res.status(404).json({ error: 'Record profile tracing parameters rejected' });
+    return res.json(scan);
+  } catch (error) {
+    console.error("Fetch Single Record Error:", error);
+    return res.status(500).json({ error: 'Record access initialization fault' });
+  }
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Secure Server processing active on port ${PORT}`));
