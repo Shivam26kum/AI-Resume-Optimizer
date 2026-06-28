@@ -11,8 +11,11 @@ export const protect = async (req, res, next) => {
       // Decrypt and verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Attach the verified user ID directly to the request object
-      req.user = { id: decoded.id };
+      // FIX: Attach both variant properties to guarantee strict schema verification passes
+      req.user = { 
+        id: decoded.id,
+        _id: decoded.id 
+      };
       
       next();
     } catch (error) {
