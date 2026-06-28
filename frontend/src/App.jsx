@@ -25,7 +25,9 @@ import {
   Eye,
   EyeOff,
   Download,
-  Eye as ViewIcon
+  Eye as ViewIcon,
+  Menu,
+  X
 } from 'lucide-react';
 
 // Resolves environmental URLs dynamically based on your deployment context
@@ -49,8 +51,9 @@ function App() {
   const [historyList, setHistoryList] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   
-  // Tab Management State
+  // Responsive Navigation States
   const [activeTab, setActiveTab] = useState('chat');
+  const [isMobileVaultOpen, setIsMobileVaultOpen] = useState(false);
   const resumePrintRef = useRef(null);
 
   const getAuthConfig = useCallback(() => {
@@ -68,6 +71,7 @@ function App() {
     setJobDescription('');
     setShowPassword(false);
     setActiveTab('chat');
+    setIsMobileVaultOpen(false);
   };
 
   const fetchHistory = useCallback(async () => {
@@ -114,7 +118,7 @@ function App() {
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
     multiple: false,
-    disabled: !token // Disables clipboard/filesystem hooks while logged out to prevent popups
+    disabled: !token
   });
 
   const handleAnalyze = async (e) => {
@@ -147,6 +151,7 @@ function App() {
 
   const loadPastScan = async (id) => {
     setLoading(true);
+    setIsMobileVaultOpen(false); // Clean closing behavior for mobile slide-outs
     try {
       const response = await axios.get(`${API_BASE_URL}/api/history/${id}`, getAuthConfig());
       setResults(response.data);
@@ -241,10 +246,10 @@ function App() {
       {/* AUTH OVERLAY MODAL */}
       {!token && (
         <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden">
+          <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden mx-auto">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
             <div className="text-center space-y-1">
-              <div className="mx-auto w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white mb-2 shadow-lg">
+              <div className="mx-auto w-10 h-10 bg-gradient-to-tr from-indigo-600 to-violet-500 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center mb-2">
                 <Sparkles size={20} />
               </div>
               <h2 className="text-xl font-bold tracking-tight text-white">Welcome to ResuAI</h2>
@@ -291,26 +296,37 @@ function App() {
       )}
 
       {/* TOP HEADER */}
-      <header className="border-b border-slate-800/60 bg-slate-900/40 backdrop-blur shrink-0 px-6 py-4 flex justify-between items-center z-40">
+      <header className="border-b border-slate-800/60 bg-slate-900/40 backdrop-blur shrink-0 px-4 sm:px-6 py-4 flex justify-between items-center z-40">
         <div className="flex items-center gap-3">
+          {token && (
+            <button 
+              type="button" 
+              onClick={() => setIsMobileVaultOpen(!isMobileVaultOpen)} 
+              className="lg:hidden p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-xl transition cursor-pointer"
+              title="Toggle Audit Vault"
+            >
+              {isMobileVaultOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
+          )}
+          {/* EXACT IDENTICAL BRAND LAYOUT SYNC */}
           <div className="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20">
             <Sparkles size={20} />
           </div>
-          <h1 className="text-lg font-bold tracking-tight text-white flex items-center">
-            ResuAI <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent text-xs font-semibold bg-indigo-500/10 px-2 py-0.5 rounded-md ml-2 border border-indigo-500/20">Optimizer Engine</span>
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center">
+            ResuAI <span className="hidden sm:inline bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent text-xs font-semibold bg-indigo-500/10 px-2 py-0.5 rounded-md ml-2 border border-indigo-500/20">Optimizer Engine</span>
           </h1>
         </div>
         
         {token && (
-          <div className="flex items-center gap-4 animate-fade-in">
-            <div className="flex items-center gap-2.5 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-4 rounded-xl shadow-inner group transition-all duration-300 hover:border-slate-700">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shadow-sm">
+          <div className="flex items-center gap-2 sm:gap-4 animate-fade-in">
+            <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner transition-all duration-300">
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shadow-sm shrink-0">
                 {username.charAt(0)}
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-semibold text-slate-200 tracking-wide capitalize">{username}</span>
+              <div className="flex flex-col text-left max-w-[80px] sm:max-w-[120px]">
+                <span className="text-xs font-semibold text-slate-200 tracking-wide capitalize truncate">{username}</span>
                 <span className="text-[9px] font-medium text-emerald-400 flex items-center gap-1 font-mono leading-none mt-0.5">
-                  <span className="h-1 w-1 rounded-full bg-emerald-400 inline-block animate-pulse" /> Active Workspace
+                  <span className="h-1 w-1 rounded-full bg-emerald-400 inline-block animate-pulse shrink-0" /> <span className="hidden xs:inline">Active</span> Workspace
                 </span>
               </div>
             </div>
@@ -322,10 +338,14 @@ function App() {
       </header>
 
       {/* WORKSPACE MAIN COLUMNS */}
-      <div className="flex-1 w-full p-6 flex flex-col lg:flex-row gap-6 overflow-hidden">
+      <div className="flex-1 w-full p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-hidden relative">
         
-        {/* PANEL 1: VAULT INDEX */}
-        <aside className="w-full lg:w-[22%] bg-slate-900/40 border border-slate-800/60 rounded-2xl p-4 flex flex-col overflow-hidden">
+        {/* PANEL 1: DESKTOP VAULT INDEX & MOBILE OVERLAY SLIDE-OUT */}
+        <aside className={`
+          fixed inset-y-0 left-0 z-30 w-[280px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col overflow-hidden transition-transform duration-300 transform mt-[73px] lg:mt-0
+          lg:static lg:w-[22%] lg:bg-slate-900/40 lg:border lg:border-slate-800/60 lg:rounded-2xl lg:transform-none
+          ${isMobileVaultOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 px-1">
             <History size={14} className="text-indigo-400" /> Audit Vault
           </h2>
@@ -340,7 +360,7 @@ function App() {
               <button key={log._id} onClick={() => loadPastScan(log._id)} className="w-full text-left bg-slate-900/40 hover:bg-indigo-950/20 border border-slate-800/60 hover:border-indigo-500/30 p-3.5 rounded-xl transition active:scale-[0.99] block cursor-pointer group">
                 <div className="flex justify-between items-start gap-3 mb-2">
                   <p className="text-xs font-medium text-slate-300 truncate flex-1 group-hover:text-indigo-400 transition">{log.fileName}</p>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${log.matchPercentage >= 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{log.matchPercentage}%</span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${log.matchPercentage >= 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{log.matchPercentage}%</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
                   <Calendar size={10} />{formatTimestamp(log.createdAt)}
@@ -350,21 +370,29 @@ function App() {
           </div>
         </aside>
 
+        {/* MOBILE BLUR BACKDROP FOR SLIDE-OUT SLIDER */}
+        {isMobileVaultOpen && (
+          <div 
+            onClick={() => setIsMobileVaultOpen(false)} 
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-20 lg:hidden mt-[73px]"
+          />
+        )}
+
         {/* PANEL 2: INPUT TARGETS */}
-        <section className="w-full lg:w-[28%] bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 flex flex-col overflow-hidden shadow-xl">
+        <section className="w-full lg:w-[28%] bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col overflow-hidden shadow-xl shrink-0">
           <h2 className="text-xs font-bold uppercase tracking-wider mb-4 text-slate-300 flex items-center gap-2">
             <Layers size={14} className="text-indigo-400" /> Target Parameters
           </h2>
           <form onSubmit={handleAnalyze} className="flex-1 flex flex-col justify-between overflow-hidden space-y-4">
-            <div className="flex-1 flex flex-col space-y-4 overflow-y-auto pr-1">
+            <div className="flex-1 flex flex-col space-y-4 overflow-y-auto pr-1 scrollbar-thin">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Input Dossier (.pdf)</label>
-                <div {...getRootProps()} className={`border rounded-xl py-10 px-5 min-h-[140px] flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'}`}>
+                <div {...getRootProps()} className={`border rounded-xl py-8 px-4 min-h-[120px] flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'}`}>
                   <input {...getInputProps()} />
                   <UploadCloud className="mx-auto mb-2 text-slate-500" size={24} />
                   {file ? (
                     <div className="flex items-center justify-center gap-1.5 bg-indigo-500/10 border border-indigo-500/20 py-1.5 px-3 rounded-lg max-w-full">
-                      <FileText size={12} className="text-indigo-400" />
+                      <FileText size={12} className="text-indigo-400 shrink-0" />
                       <p className="text-xs font-medium text-indigo-300 truncate">{file.name}</p>
                     </div>
                   ) : (
@@ -372,12 +400,12 @@ function App() {
                   )}
                 </div>
               </div>
-              <div className="flex-1 flex flex-col min-h-[180px]">
+              <div className="flex-1 flex flex-col min-h-[140px] lg:min-h-[180px]">
                 <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Benchmark (JD)</label>
                 <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste job profile parameters or technical requirements..." className="w-full flex-1 bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-none leading-relaxed" />
               </div>
             </div>
-            <button type="submit" disabled={loading || !file || !jobDescription.trim()} className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg flex justify-center items-center gap-2 cursor-pointer shrink-0">
+            <button type="submit" disabled={loading || !file || !jobDescription.trim()} className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg flex justify-center items-center gap-2 cursor-pointer shrink-0 active:scale-[0.99]">
               {loading ? <RefreshCw className="animate-spin" size={13} /> : <><Zap size={13} />Run AI Optimization</>}
             </button>
           </form>
@@ -385,19 +413,19 @@ function App() {
 
         {/* PANEL 3: DYNAMIC WORKSPACE PORTAL */}
         <section className="w-full lg:w-[50%] bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
-          <div className="bg-slate-900/60 border-b border-slate-800/80 px-5 py-3 flex justify-between items-center shrink-0">
-            <div className="flex items-center gap-4">
-              <button type="button" onClick={() => setActiveTab('chat')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 py-2 border-b-2 transition cursor-pointer ${activeTab === 'chat' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-                <MessageSquare size={13} /> Optimization Stream
+          <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-5 py-3 flex justify-between items-center shrink-0 gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button type="button" onClick={() => setActiveTab('chat')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'chat' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+                <MessageSquare size={13} /> <span className="hidden xxs:inline">Stream</span><span className="xxs:hidden">AI</span>
               </button>
               {results && (
-                <button type="button" onClick={() => setActiveTab('preview')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 py-2 border-b-2 transition cursor-pointer ${activeTab === 'preview' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-                  <ViewIcon size={13} /> Document Exporter
+                <button type="button" onClick={() => setActiveTab('preview')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'preview' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
+                  <ViewIcon size={13} /> <span className="hidden xxs:inline">Exporter</span><span className="xxs:hidden">PDF</span>
                 </button>
               )}
             </div>
             {results && (
-              <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-full border ${results.matchPercentage >= 80 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/5 text-rose-400 border-rose-500/20'}`}>
+              <span className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded-full border shrink-0 ${results.matchPercentage >= 80 ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/5 text-rose-400 border-rose-500/20'}`}>
                 Match: {results.matchPercentage}%
               </span>
             )}
@@ -405,7 +433,7 @@ function App() {
 
           {/* TAB 1: OPTIMIZATION STREAM */}
           {activeTab === 'chat' && (
-            <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-950/20 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-950/20 scrollbar-thin">
               {loading && (
                 <div className="flex items-start gap-3 max-w-[85%] animate-pulse">
                   <div className="h-8 w-8 rounded-xl bg-slate-800 shrink-0" />
@@ -413,51 +441,53 @@ function App() {
                 </div>
               )}
               {!loading && !results && (
-                <div className="h-full w-full flex flex-col justify-center items-center text-center text-slate-500 p-6 font-mono">
+                <div className="h-full w-full flex flex-col justify-center items-center text-center text-slate-500 p-6 font-mono min-h-[220px]">
                   <Terminal size={28} className="mb-2 text-slate-700 stroke-1" />
                   <p className="text-xs font-semibold text-slate-400">CONSOLE AWAITING ATTACHMENT</p>
                 </div>
               )}
               {!loading && results && (
-                <div className="space-y-5 animate-fade-in">
-                  <div className="flex items-start gap-3 max-w-[92%]">
-                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xs shrink-0 font-bold">AI</div>
-                    <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-md"><p className="text-xs text-slate-300 leading-relaxed">{results.summary}</p></div>
+                <div className="space-y-5 animate-fade-in pb-4">
+                  <div className="flex items-start gap-3 max-w-[95%] sm:max-w-[92%]">
+                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xs shrink-0 font-bold shadow-md">AI</div>
+                    <div className="bg-slate-900/80 border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-md"><p className="text-xs text-slate-300 leading-relaxed">{results.summary}</p></div>
                   </div>
-                  <div className="flex items-start gap-3 max-w-[92%]">
-                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xs shrink-0 font-bold">AI</div>
-                    <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-md w-full space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <h4 className="text-[11px] font-bold text-emerald-400 font-mono mb-1">Matrix Passes</h4>
-                          {results.strengths?.map((str, idx) => <div key={idx} className="text-[11px] text-slate-300 bg-slate-950 p-2 rounded-lg border border-slate-900/60 mb-1">{str}</div>)}
+                  <div className="flex items-start gap-3 max-w-[95%] sm:max-w-[92%]">
+                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xs shrink-0 font-bold shadow-md">AI</div>
+                    <div className="bg-slate-900/80 border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-md w-full space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <h4 className="text-[11px] font-bold text-emerald-400 font-mono mb-1 tracking-wider uppercase">Matrix Passes</h4>
+                          {results.strengths?.map((str, idx) => <div key={idx} className="text-[11px] text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-900/60 leading-normal">{str}</div>)}
                         </div>
-                        <div>
-                          <h4 className="text-[11px] font-bold text-rose-400 font-mono mb-1">Gaps Found</h4>
-                          {results.weaknesses?.map((weak, idx) => <div key={idx} className="text-[11px] text-slate-300 bg-slate-950 p-2 rounded-lg border border-slate-900/60 mb-1">{weak}</div>)}
+                        <div className="space-y-1.5">
+                          <h4 className="text-[11px] font-bold text-rose-400 font-mono mb-1 tracking-wider uppercase">Gaps Found</h4>
+                          {results.weaknesses?.map((weak, idx) => <div key={idx} className="text-[11px] text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-900/60 leading-normal">{weak}</div>)}
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3 max-w-[92%]">
-                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xs shrink-0 font-bold">AI</div>
-                    <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-md space-y-1">
+                  <div className="flex items-start gap-3 max-w-[95%] sm:max-w-[92%]">
+                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xs shrink-0 font-bold shadow-md">AI</div>
+                    <div className="bg-slate-900/80 border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-md space-y-2 w-full">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 font-mono block">Missing Context Vectors</span>
                       <div className="flex flex-wrap gap-1.5">{results.missingKeywords?.map((kw, idx) => <span key={idx} className="text-[10px] font-medium px-2.5 py-1 bg-rose-500/5 border border-rose-500/20 text-rose-400 rounded-md">{kw}</span>)}</div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3 max-w-[92%]">
-                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xs shrink-0 font-bold">AI</div>
-                    <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-md w-full space-y-3">
+                  <div className="flex items-start gap-3 max-w-[95%] sm:max-w-[92%]">
+                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xs shrink-0 font-bold shadow-md">AI</div>
+                    <div className="bg-slate-900/80 border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-md w-full space-y-3">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 font-mono block">Line Tuning Optimization</span>
                       {results.actionableImprovements?.map((item, idx) => (
                         <div key={idx} className="bg-slate-950/60 border border-slate-900 rounded-xl overflow-hidden shadow-sm">
-                          <div className="bg-slate-900/40 px-3 py-1 border-b border-slate-900 text-[9px] font-bold uppercase text-indigo-400">{item.section || 'General'}</div>
+                          <div className="bg-slate-900/40 px-3 py-1.5 border-b border-slate-900 text-[9px] font-bold uppercase text-indigo-400">{item.section || 'General'}</div>
                           <div className="p-3 space-y-2">
-                            <p className="text-[11px] text-slate-500 line-through">{item.currentText}</p>
-                            <div className="relative bg-emerald-950/10 p-2 rounded-lg border border-emerald-900/20">
-                              <p className="text-[11px] text-emerald-400 pr-8 font-medium">{item.suggestedText}</p>
-                              <button type="button" onClick={() => copyToClipboard(item.suggestedText, idx)} className="absolute right-2 bottom-2 p-1.5 bg-slate-950 border border-slate-800 rounded text-slate-400 hover:text-slate-200 transition-all">{copiedId === idx ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}</button>
+                            <p className="text-[11px] text-slate-500 line-through leading-normal">{item.currentText}</p>
+                            <div className="relative bg-emerald-950/10 p-2.5 rounded-lg border border-emerald-900/20 pr-10">
+                              <p className="text-[11px] text-emerald-400 font-medium leading-normal">{item.suggestedText}</p>
+                              <button type="button" onClick={() => copyToClipboard(item.suggestedText, idx)} className="absolute right-2.5 bottom-2.5 p-1.5 bg-slate-950 border border-slate-800 rounded text-slate-400 hover:text-slate-200 transition-all cursor-pointer">
+                                {copiedId === idx ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -472,29 +502,32 @@ function App() {
           {/* TAB 2: DOCUMENT EXPORTER CANVASES */}
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
-              <div className="p-3 bg-slate-950/40 border-b border-slate-800 flex justify-between items-center shrink-0">
+              <div className="p-3 bg-slate-950/40 border-b border-slate-800 flex flex-col xs:flex-row justify-between items-start xs:items-center shrink-0 gap-2">
                 <span className="text-[11px] text-slate-400 font-mono">Original Document Structure (Optimized Live)</span>
                 <button 
                   type="button" 
                   onClick={handleExportPDF} 
-                  className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition shadow-md cursor-pointer"
+                  className="w-full xs:w-auto py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow-md cursor-pointer"
                 >
                   <Download size={13} /> Export Official PDF
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 flex justify-center scrollbar-thin bg-slate-950/40">
-                <div 
-                  ref={resumePrintRef}
-                  className="w-[8.5in] min-h-[11in] rounded-sm flex flex-col text-left text-xs leading-relaxed overflow-hidden"
-                  style={{ 
-                    fontFamily: 'Arial, Helvetica, sans-serif',
-                    backgroundColor: '#ffffff',
-                    padding: '48px'
-                  }}
-                >
-                  <div className="whitespace-pre-line max-w-full font-sans tracking-normal text-[11px]" style={{ color: '#1e293b' }}>
-                    {renderOptimizedResumeBody()}
+              {/* HORIZONTAL EMBED CANVAS SCROLLER FOR ALL RESPONSIVE VIEWPORTS */}
+              <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-start items-start bg-slate-950/40 scrollbar-thin">
+                <div className="min-w-[816px] bg-slate-900 p-1 border border-slate-800 shadow-xl rounded-md mx-auto">
+                  <div 
+                    ref={resumePrintRef}
+                    className="w-[8.5in] min-h-[11in] flex flex-col text-left text-xs leading-relaxed overflow-hidden shadow-inner"
+                    style={{ 
+                      fontFamily: 'Arial, Helvetica, sans-serif',
+                      backgroundColor: '#ffffff',
+                      padding: '48px'
+                    }}
+                  >
+                    <div className="whitespace-pre-line max-w-full font-sans tracking-normal text-[11px]" style={{ color: '#1e293b' }}>
+                      {renderOptimizedResumeBody()}
+                    </div>
                   </div>
                 </div>
               </div>
