@@ -22,24 +22,35 @@ connectDB();
 
 const app = express();
 
-<<<<<<< HEAD
-// Secure CORS policy whitelisting configuration for local development and production
-app.use(cors({
-  origin: [
+// ====================================================
+// IRONCLAD HANDMADE CORS & PREFLIGHT OPTIONS INTERCEPTOR
+// ====================================================
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
     'http://localhost:5173',
-    'https://your-frontend-name.vercel.app' // Change this to your live Vercel domain link!
-=======
-// Modern CORS policy configuration whitelisting local workspace and live Vercel deployments
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://ai-resume-optimizer-beta-six.vercel.app'
->>>>>>> c32363e (authentication solve)
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    'https://ai-resume-optimizer-beta-six.vercel.app',
+    'https://ai-resume-optimizer-inky.vercel.app',
+    process.env.CLIENT_ORIGIN
+  ];
+
+  if (origin) {
+    if (allowedOrigins.includes(origin) || (origin.includes('ai-resume-optimizer') && origin.includes('.vercel.app'))) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+  }
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  next();
+});
 
 app.use(express.json());
 
@@ -70,7 +81,6 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Username or Email identity already registered' });
     }
 
-    // Encrypt password securely using bcrypt
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -124,7 +134,6 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       return res.status(400).json({ error: 'Please provide a target job description' });
     }
 
-    // Parse the PDF text contents safely using the buffer array
     const pdfData = await pdfParse(file.buffer);
     const resumeText = pdfData.text;
 
@@ -132,7 +141,6 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       return res.status(400).json({ error: 'Failed to extract text content from the uploaded PDF resume' });
     }
 
-    // Leverage modern gemini-2.5-flash constraints to enforce native JSON outputs
     const model = ai.getGenerativeModel({ 
       model: "gemini-2.5-flash",
       generationConfig: { responseMimeType: "application/json" }
@@ -167,10 +175,8 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
     const result = await model.generateContent(prompt);
     let responseText = result.response.text().trim();
     
-    // Completely bulletproof boundary cleaning using strict regex matching
     responseText = responseText.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
 
-    // Parse data cleanly into structural runtime notation
     let analysisResult;
     try {
       analysisResult = JSON.parse(responseText);
@@ -179,12 +185,11 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       return res.status(500).json({ error: 'AI engine generated a malformed schema block. Please run analysis again.' });
     }
 
-    // Save scan data document linked straight to your verified user profile instance ID
     const savedScan = await Scan.create({
-      userId: req.user.id,
+      userId: req.user._id, // Fully synced database reference fix
       fileName: file.originalname,
       jobDescription: jobDescription,
-      resumeRawText: resumeText, // Saves the true raw source text mapping configuration
+      resumeRawText: resumeText,
       ...analysisResult 
     });
 
@@ -200,7 +205,7 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
 // ==========================================
 app.get('/api/history', protect, async (req, res) => {
   try {
-    const history = await Scan.find({ userId: req.user.id })
+    const history = await Scan.find({ userId: req.user._id })
                               .sort({ createdAt: -1 })
                               .select('fileName matchPercentage createdAt summary'); 
     return res.json(history);
@@ -215,7 +220,7 @@ app.get('/api/history', protect, async (req, res) => {
 // ==========================================
 app.get('/api/history/:id', protect, async (req, res) => {
   try {
-    const scan = await Scan.findOne({ _id: req.params.id, userId: req.user.id });
+    const scan = await Scan.findOne({ _id: req.params.id, userId: req.user._id });
     if (!scan) return res.status(404).json({ error: 'Record profile tracing parameters rejected' });
     return res.json(scan);
   } catch (error) {
