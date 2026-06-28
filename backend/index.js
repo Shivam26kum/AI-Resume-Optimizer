@@ -130,15 +130,28 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
     if (!file) {
       return res.status(400).json({ error: 'Please upload a resume file' });
     }
-    if (!jobDescription) {
+    if (!jobDescription || !jobDescription.trim()) {
       return res.status(400).json({ error: 'Please provide a target job description' });
     }
 
-    const pdfData = await pdfParse(file.buffer);
-    const resumeText = pdfData.text;
+    // 1. Hardened Extraction Pipeline with Fallback Safe-guards
+    let resumeText = '';
+    try {
+      const pdfData = await pdfParse(file.buffer);
+      resumeText = pdfData.text;
+    } catch (parseError) {
+      console.error("PDF Parser Library Failure:", parseError);
+      return res.status(400).json({ error: 'Unable to extract text layout structure from this specific PDF template. Please try resaving or changing your file format.' });
+    }
 
-    if (!resumeText.trim()) {
-      return res.status(400).json({ error: 'Failed to extract text content from the uploaded PDF resume' });
+    if (!resumeText || !resumeText.trim()) {
+      return res.status(400).json({ error: 'Failed to extract plain-text from the uploaded PDF document structure.' });
+    }
+
+    // 2. Safe verification of the API Key layer
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("Missing GEMINI_API_KEY inside Render Environment Panel.");
+      return res.status(500).json({ error: 'AI engine authentication mismatch in cloud config.' });
     }
 
     const model = ai.getGenerativeModel({ 
@@ -150,8 +163,8 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       You are an elite corporate recruiter and ATS optimization algorithm. 
       Analyze the following Resume against the given Job Description.
       
-      Resume Text: "${resumeText}"
-      Job Description: "${jobDescription}"
+      Resume Text: "${resumeText.replace(/"/g, '\\"')}"
+      Job Description: "${jobDescription.replace(/"/g, '\\"')}"
       
       You MUST respond with a valid JSON object matching the exact structure below. 
       CRITICAL RULE FOR "currentText": This field MUST contain the EXACT, LITERAL, WORD-FOR-WORD substring taken directly from the provided Resume text that you intend to optimize. Do not paraphrase, alter punctuation, or summarize the original text in the "currentText" field, otherwise string replacement engines will break.
@@ -182,23 +195,30 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       analysisResult = JSON.parse(responseText);
     } catch (parseError) {
       console.error("JSON Parsing failed. Raw AI text dump was:", responseText);
-      return res.status(500).json({ error: 'AI engine generated a malformed schema block. Please run analysis again.' });
+      return res.status(500).json({ error: 'AI engine generated a malformed schema layout. Please run the analysis check again.' });
     }
 
+    // 3. Robust Mongoose Database Persistence Injection
     const savedScan = await Scan.create({
-      userId: req.user._id, // Fully synced database reference fix
-      fileName: file.originalname,
+      userId: req.user._id, 
+      fileName: file.originalname || 'Uploaded_Resume.pdf',
       jobDescription: jobDescription,
       resumeRawText: resumeText,
-      ...analysisResult 
+      matchPercentage: analysisResult.matchPercentage || 50,
+      summary: analysisResult.summary || 'Analysis complete.',
+      strengths: analysisResult.strengths || [],
+      weaknesses: analysisResult.weaknesses || [],
+      missingKeywords: analysisResult.missingKeywords || [],
+      actionableImprovements: analysisResult.actionableImprovements || []
     });
 
     return res.json(savedScan);
   } catch (error) {
     console.error("Pipeline Exception Failure:", error);
-    return res.status(500).json({ error: 'Internal pipeline processing fault occurred' });
+    return res.status(500).json({ error: 'Internal server engine fault occurred during data mapping.' });
   }
 });
+
 
 // ==========================================
 // GET HISTORY LIST (PROTECTED FOR RELEVANT USER ONLY)
