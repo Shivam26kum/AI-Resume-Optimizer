@@ -153,7 +153,6 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       generationConfig: { responseMimeType: "application/json" }
     });
 
-    // Clean inputs of troublesome line breaks and unescaped quotes
     const cleanResume = resumeText.replace(/["\\\r\n]/g, ' ');
     const cleanJD = jobDescription.replace(/["\\\r\n]/g, ' ');
 
@@ -204,18 +203,24 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       return res.status(500).json({ error: 'AI data mapping compilation crash. Please test again.' });
     }
 
-    // 2. Safe Fallback Properties Injector
+    // 2. Safe Fallback Properties Injector with Absolute Sub-document Type Validation
     const scanPayload = {
       userId: req.user._id, 
       fileName: file.originalname || 'Resume.pdf',
       jobDescription: jobDescription,
       resumeRawText: resumeText,
       matchPercentage: Number(analysisResult.matchPercentage) || 0,
-      summary: analysisResult.summary || 'Processing baseline analysis complete.',
-      strengths: Array.isArray(analysisResult.strengths) ? analysisResult.strengths : [],
-      weaknesses: Array.isArray(analysisResult.weaknesses) ? analysisResult.weaknesses : [],
-      missingKeywords: Array.isArray(analysisResult.missingKeywords) ? analysisResult.missingKeywords : [],
-      actionableImprovements: Array.isArray(analysisResult.actionableImprovements) ? analysisResult.actionableImprovements : []
+      summary: String(analysisResult.summary || 'Processing baseline analysis complete.'),
+      strengths: Array.isArray(analysisResult.strengths) ? analysisResult.strengths.map(String) : [],
+      weaknesses: Array.isArray(analysisResult.weaknesses) ? analysisResult.weaknesses.map(String) : [],
+      missingKeywords: Array.isArray(analysisResult.missingKeywords) ? analysisResult.missingKeywords.map(String) : [],
+      actionableImprovements: Array.isArray(analysisResult.actionableImprovements) 
+        ? analysisResult.actionableImprovements.map(item => ({
+            section: String(item.section || 'General'),
+            currentText: String(item.currentText || ''),
+            suggestedText: String(item.suggestedText || '')
+          }))
+        : []
     };
 
     try {
