@@ -30,8 +30,8 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
-    'https://ai-resume-optimizer-beta-six.vercel.app',
-    'https://ai-resume-optimizer-inky.vercel.app',
+    '[https://ai-resume-optimizer-beta-six.vercel.app](https://ai-resume-optimizer-beta-six.vercel.app)',
+    '[https://ai-resume-optimizer-inky.vercel.app](https://ai-resume-optimizer-inky.vercel.app)',
     process.env.CLIENT_ORIGIN
   ];
 
@@ -134,24 +134,18 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       return res.status(400).json({ error: 'Please provide a target job description' });
     }
 
-    // 1. Hardened Extraction Pipeline with Fallback Safe-guards
+    // 1. Text Extraction Configuration
     let resumeText = '';
     try {
       const pdfData = await pdfParse(file.buffer);
       resumeText = pdfData.text;
     } catch (parseError) {
       console.error("PDF Parser Library Failure:", parseError);
-      return res.status(400).json({ error: 'Unable to extract text layout structure from this specific PDF template. Please try resaving or changing your file format.' });
+      return res.status(400).json({ error: 'Unable to parse file text architecture.' });
     }
 
     if (!resumeText || !resumeText.trim()) {
-      return res.status(400).json({ error: 'Failed to extract plain-text from the uploaded PDF document structure.' });
-    }
-
-    // 2. Safe verification of the API Key layer
-    if (!process.env.GEMINI_API_KEY) {
-      console.error("Missing GEMINI_API_KEY inside Render Environment Panel.");
-      return res.status(500).json({ error: 'AI engine authentication mismatch in cloud config.' });
+      return res.status(400).json({ error: 'Parsed text layer is blank.' });
     }
 
     const model = ai.getGenerativeModel({ 
@@ -188,37 +182,45 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
     const result = await model.generateContent(prompt);
     let responseText = result.response.text().trim();
     
-    responseText = responseText.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+    // FIX: Highly resilient extraction parser that targets ONLY structural JSON brackets
+    const jsonStartIndex = responseText.indexOf('{');
+    const jsonEndIndex = responseText.lastIndexOf('}');
+    
+    if (jsonStartIndex === -1 || jsonEndIndex === -1) {
+      console.error("No valid JSON structure found in AI response. Raw output:", responseText);
+      return res.status(500).json({ error: 'AI model failed to respond with a clean data payload.' });
+    }
+    
+    responseText = responseText.substring(jsonStartIndex, jsonEndIndex + 1);
 
     let analysisResult;
     try {
       analysisResult = JSON.parse(responseText);
     } catch (parseError) {
-      console.error("JSON Parsing failed. Raw AI text dump was:", responseText);
-      return res.status(500).json({ error: 'AI engine generated a malformed schema layout. Please run the analysis check again.' });
+      console.error("JSON Parsing failed. Targeted block was:", responseText);
+      return res.status(500).json({ error: 'AI data mapping compilation crash. Please test again.' });
     }
 
-    // 3. Robust Mongoose Database Persistence Injection
+    // 2. Safe Fallback Properties Injector
     const savedScan = await Scan.create({
       userId: req.user._id, 
-      fileName: file.originalname || 'Uploaded_Resume.pdf',
+      fileName: file.originalname || 'Resume.pdf',
       jobDescription: jobDescription,
       resumeRawText: resumeText,
-      matchPercentage: analysisResult.matchPercentage || 50,
-      summary: analysisResult.summary || 'Analysis complete.',
-      strengths: analysisResult.strengths || [],
-      weaknesses: analysisResult.weaknesses || [],
-      missingKeywords: analysisResult.missingKeywords || [],
-      actionableImprovements: analysisResult.actionableImprovements || []
+      matchPercentage: Number(analysisResult.matchPercentage) || 0,
+      summary: analysisResult.summary || 'Processing baseline analysis complete.',
+      strengths: Array.isArray(analysisResult.strengths) ? analysisResult.strengths : [],
+      weaknesses: Array.isArray(analysisResult.weaknesses) ? analysisResult.weaknesses : [],
+      missingKeywords: Array.isArray(analysisResult.missingKeywords) ? analysisResult.missingKeywords : [],
+      actionableImprovements: Array.isArray(analysisResult.actionableImprovements) ? analysisResult.actionableImprovements : []
     });
 
     return res.json(savedScan);
   } catch (error) {
     console.error("Pipeline Exception Failure:", error);
-    return res.status(500).json({ error: 'Internal server engine fault occurred during data mapping.' });
+    return res.status(500).json({ error: 'Internal system engine fault occurred during data mapping.' });
   }
 });
-
 
 // ==========================================
 // GET HISTORY LIST (PROTECTED FOR RELEVANT USER ONLY)
