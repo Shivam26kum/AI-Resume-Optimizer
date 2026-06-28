@@ -24,7 +24,7 @@ const ScanSchema = new mongoose.Schema({
   },
   summary: {
     type: String,
-    default: ''
+    default: 'Analysis processing complete.'
   },
   strengths: {
     type: [String],
