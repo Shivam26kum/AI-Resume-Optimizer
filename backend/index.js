@@ -134,30 +134,21 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       return res.status(400).json({ error: 'Please provide a target job description' });
     }
 
-    // 1. Safe Robust Text Extraction Fallback Configuration
     let resumeText = '';
     try {
       const pdfData = await pdfParse(file.buffer);
       resumeText = pdfData.text;
     } catch (parseError) {
-      console.warn("PDF Parser struggled with layout parsing, fallback processing active:", parseError.message);
-      // Fallback: convert complex binary string array cleanly to readable text tokens
+      console.warn("PDF Parser error, fallback string allocation active:", parseError.message);
       resumeText = file.buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r]/g, ' ');
     }
 
     if (!resumeText || !resumeText.trim()) {
-      // Final fallback safety mechanism
       resumeText = file.buffer.toString('ascii').replace(/[^\x20-\x7E\n\r]/g, ' ');
     }
 
     if (!resumeText.trim()) {
-      return res.status(400).json({ error: 'Unable to parse text from document. Please use a clean font layout.' });
-    }
-
-    // 2. Safeguard AI configuration state
-    if (!process.env.GEMINI_API_KEY) {
-      console.error("CRITICAL ERROR: GEMINI_API_KEY is missing from environment variables.");
-      return res.status(500).json({ error: 'AI Client initialization variable mismatch.' });
+      return res.status(400).json({ error: 'Unable to extract clean layout text from document.' });
     }
 
     const model = ai.getGenerativeModel({ 
@@ -176,7 +167,6 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       Job Description: "${cleanJD}"
       
       You MUST respond with a valid JSON object matching the exact structure below.
-      All JSON properties must be present.
 
       {
         "matchPercentage": 85,
@@ -187,8 +177,8 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
         "actionableImprovements": [
           { 
             "section": "Experience", 
-            "currentText": "exact weak text from resume", 
-            "suggestedText": "optimized text" 
+            "currentText": "exact weak text from resume string", 
+            "suggestedText": "optimized bullet point incorporating action verbs and metrics" 
           }
         ]
       }
@@ -201,8 +191,7 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
     const jsonEndIndex = responseText.lastIndexOf('}');
     
     if (jsonStartIndex === -1 || jsonEndIndex === -1) {
-      console.error("AI returned malformed data block:", responseText);
-      return res.status(500).json({ error: 'AI model failed to respond with a clean data structure.' });
+      return res.status(500).json({ error: 'AI model failed to respond with a clean data payload.' });
     }
     
     responseText = responseText.substring(jsonStartIndex, jsonEndIndex + 1);
@@ -211,26 +200,25 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
     try {
       analysisResult = JSON.parse(responseText);
     } catch (parseError) {
-      console.error("JSON Parsing failed. Raw block was:", responseText);
       return res.status(500).json({ error: 'AI data mapping parsing crash.' });
     }
 
-    // 3. Cast values into absolute type layouts
+    // CRITICAL FIX: Safe, explicit flattening of properties and sub-document properties
     const scanPayload = {
       userId: req.user._id, 
       fileName: file.originalname || 'Resume.pdf',
-      jobDescription: jobDescription,
-      resumeRawText: resumeText,
+      jobDescription: String(jobDescription),
+      resumeRawText: String(resumeText),
       matchPercentage: Number(analysisResult.matchPercentage) || 0,
-      summary: String(analysisResult.summary || 'Analysis sequence baseline execution finalized.'),
+      summary: String(analysisResult.summary || 'Processing baseline analysis complete.'),
       strengths: Array.isArray(analysisResult.strengths) ? analysisResult.strengths.map(String) : [],
       weaknesses: Array.isArray(analysisResult.weaknesses) ? analysisResult.weaknesses.map(String) : [],
       missingKeywords: Array.isArray(analysisResult.missingKeywords) ? analysisResult.missingKeywords.map(String) : [],
       actionableImprovements: Array.isArray(analysisResult.actionableImprovements) 
         ? analysisResult.actionableImprovements.map(item => ({
-            section: String(item.section || 'General'),
-            currentText: String(item.currentText || ''),
-            suggestedText: String(item.suggestedText || '')
+            section: String(item.section || item.Section || 'General'),
+            currentText: String(item.currentText || item.CurrentText || ''),
+            suggestedText: String(item.suggestedText || item.SuggestedText || '')
           }))
         : []
     };
@@ -239,12 +227,12 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       const savedScan = await Scan.create(scanPayload);
       return res.json(savedScan);
     } catch (dbError) {
-      console.error("Mongoose Scan Insertion Failure:", dbError);
+      console.error("Mongoose Insertion Crash Details:", dbError.message);
       return res.status(500).json({ error: 'Database pipeline failed to validate data types.' });
     }
   } catch (error) {
-    console.error("Fatal Top-Level Route Failure:", error);
-    return res.status(500).json({ error: 'Internal system pipeline engine error.' });
+    console.error("Pipeline Exception Failure:", error);
+    return res.status(500).json({ error: 'Internal system engine fault occurred during data mapping.' });
   }
 });
 
