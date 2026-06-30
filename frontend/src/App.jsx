@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import * as html2pdf from 'html2pdf.js'; // Robust CommonJS bundle matching rules for Vite
-import { useToaster } from 'react-toastella'; // Premium toast notification bridge injected perfectly
+import { ToastContainer, toast } from 'react-toastify'; // Premium Toast Engine Injection
+import 'react-toastify/dist/ReactToastify.css'; // Essential base stylesheet for smooth slide animations
 import { 
   UploadCloud, 
   FileText, 
@@ -34,9 +35,6 @@ import {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
-  // Initialize react-toastella controller instance
-  const toast = useToaster();
-
   // Authentication States
   const [token, setToken] = useState(localStorage.getItem('userToken') || null);
   const [username, setUsername] = useState(localStorage.getItem('userName') || '');
@@ -163,7 +161,6 @@ function App() {
       toast.success('Optimization scan completed successfully!');
       fetchHistory();
     } catch (error) {
-      // FIX: Replaced native window alert with react-toastella error handler
       toast.error(error.response?.data?.error || "Pipeline processing failure.");
     } finally {
       setLoading(false);
@@ -204,7 +201,6 @@ function App() {
       toast.success('Scan entry permanently purged from vault ledger.');
       fetchHistory();
     } catch (error) {
-      // FIX: Replaced native window alert with react-toastella error handler
       toast.error(error.response?.data?.error || "Failed to remove item from vault.");
     }
   };
@@ -291,6 +287,20 @@ function App() {
   return (
     <div className="h-screen w-screen bg-slate-950 text-slate-100 font-sans flex flex-col overflow-hidden relative">
       
+      {/* GLOBAL TOAST CONTAINER COMPONENT */}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
+
       {/* AUTH OVERLAY MODAL */}
       {!token && (
         <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
