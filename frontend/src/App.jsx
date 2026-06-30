@@ -58,6 +58,11 @@ function App() {
   const [activeDropdownId, setActiveDropdownId] = useState(null); 
   const resumePrintRef = useRef(null);
 
+  // Custom Secure Delete Modal States
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [targetDeleteLog, setTargetDeleteLog] = useState(null); // Holds { _id, fileName }
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
+
   const getAuthConfig = useCallback(() => {
     return { headers: { Authorization: `Bearer ${token}` } };
   }, [token]);
@@ -185,11 +190,27 @@ function App() {
     }
   };
 
-  const handleDeleteScan = async (e, id) => {
-    e.stopPropagation(); 
-    if (!window.confirm("Are you sure you want to permanently delete this optimization scan?")) return;
+  // Intercepts context call and initialises secure confirmation modal tracking parameters
+  const triggerDeleteModal = (e, log) => {
+    e.stopPropagation();
+    setTargetDeleteLog(log);
+    setDeleteConfirmationInput('');
+    setDeleteModalOpen(true);
+    setActiveDropdownId(null);
+  };
+
+  // Executes secure, validated drop query downstream
+  const handleSecureDeleteScan = async (e) => {
+    e.preventDefault();
+    if (!targetDeleteLog) return;
+    
+    if (deleteConfirmationInput.trim() !== targetDeleteLog.fileName.trim()) {
+      toast.error("Filename validation failure. Please type the exact name.");
+      return;
+    }
 
     try {
+      const id = targetDeleteLog._id;
       await axios.delete(`${API_BASE_URL}/api/history/${id}`, getAuthConfig());
       
       if (results && results._id === id) {
@@ -199,6 +220,8 @@ function App() {
       }
       
       toast.success('Scan entry permanently purged from vault ledger.');
+      setDeleteModalOpen(false);
+      setTargetDeleteLog(null);
       fetchHistory();
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to remove item from vault.");
@@ -300,6 +323,61 @@ function App() {
         pauseOnHover
         theme="dark"
       />
+
+      {/* CUSTOM DATA DELETION AUTH MODAL OVERLAY */}
+      {deleteModalOpen && targetDeleteLog && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-5 relative overflow-hidden mx-auto">
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent" />
+            
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl shadow-lg shrink-0">
+                <AlertTriangle size={22} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-white tracking-tight">Confirm Vault Purge Sequence</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">This action cannot be undone. You are completely clearing this analytical ledger record from Cloud Atlas storage.</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 font-mono text-center select-all">
+              <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold block mb-1">Target Identity String</span>
+              <p className="text-xs text-rose-400 font-bold break-all">{targetDeleteLog.fileName}</p>
+            </div>
+
+            <form onSubmit={handleSecureDeleteScan} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Re-type File Name to Authorize</label>
+                <input 
+                  type="text" 
+                  required
+                  value={deleteConfirmationInput}
+                  onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+                  placeholder="Paste or type exact target filename..." 
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-rose-500/50 transition"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => { setDeleteModalOpen(false); setTargetDeleteLog(null); }}
+                  className="py-2.5 border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400 hover:text-slate-200 font-semibold text-xs rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={deleteConfirmationInput !== targetDeleteLog.fileName}
+                  className="py-2.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-rose-950/20 flex justify-center items-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 size={13} /> Confirm Delete
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* AUTH OVERLAY MODAL */}
       {!token && (
@@ -440,7 +518,7 @@ function App() {
                     <div className="absolute right-0 mt-1 w-28 bg-slate-900 border border-slate-800 rounded-lg shadow-xl py-1 z-20 animate-fade-in">
                       <button
                         type="button"
-                        onClick={(e) => handleDeleteScan(e, log._id)}
+                        onClick={(e) => triggerDeleteModal(e, log)}
                         className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-rose-400 hover:bg-rose-950/30 flex items-center gap-1.5 transition cursor-pointer"
                       >
                         <Trash2 size={12} /> Delete Scan
