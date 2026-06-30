@@ -25,7 +25,8 @@ import {
   User,
   LogOut,
   Download,
-  Eye as ViewIcon,
+  Eye,
+  EyeOff,
   Menu,
   X,
   MoreVertical,
@@ -60,7 +61,7 @@ function App() {
 
   // Custom Secure Delete Modal States
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [targetDeleteLog, setTargetDeleteLog] = useState(null); // Holds { _id, fileName }
+  const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
   const getAuthConfig = useCallback(() => {
@@ -190,7 +191,6 @@ function App() {
     }
   };
 
-  // Intercepts context call and initialises secure confirmation modal tracking parameters
   const triggerDeleteModal = (e, log) => {
     e.stopPropagation();
     setTargetDeleteLog(log);
@@ -199,7 +199,6 @@ function App() {
     setActiveDropdownId(null);
   };
 
-  // Executes secure, validated drop query downstream
   const handleSecureDeleteScan = async (e) => {
     e.preventDefault();
     if (!targetDeleteLog) return;
@@ -585,7 +584,7 @@ function App() {
               </button>
               {results && (
                 <button type="button" onClick={() => setActiveTab('preview')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'preview' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-                  <ViewIcon size={13} /> <span className="hidden xxs:inline">Exporter</span><span className="xxs:hidden">PDF</span>
+                  <Eye size={13} /> <span className="hidden xxs:inline">Exporter</span><span className="xxs:hidden">PDF</span>
                 </button>
               )}
             </div>
