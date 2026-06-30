@@ -265,9 +265,6 @@ app.get('/api/history/:id', protect, async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Secure Server processing active on port ${PORT}`));
-
 // ==========================================
 // DELETE SPECIFIC RECORD FROM VAULT (PROTECTED)
 // ==========================================
@@ -286,3 +283,7 @@ app.delete('/api/history/:id', protect, async (req, res) => {
     return res.status(500).json({ error: 'Failed to complete database deletion sequence.' });
   }
 });
+
+// Port configuration and listener always mount at the very bottom
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Secure Server processing active on port ${PORT}`));
