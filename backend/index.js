@@ -26,18 +26,24 @@ const app = express();
 // IRONCLAD HANDMADE CORS & PREFLIGHT OPTIONS INTERCEPTOR
 // ====================================================
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
+  // Sanitize headers to ensure trailing slashes never break preflight rules
+  const origin = req.headers.origin ? req.headers.origin.replace(/\/$/, '') : null;
+  
+  const configuredClientOrigin = process.env.CLIENT_ORIGIN 
+    ? process.env.CLIENT_ORIGIN.replace(/\/$/, '') 
+    : null;
+
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
     'https://ai-resume-optimizer-beta-six.vercel.app',
     'https://ai-resume-optimizer-inky.vercel.app',
-    process.env.CLIENT_ORIGIN
-  ];
+    configuredClientOrigin
+  ].filter(Boolean); // Clears empty entries out of the matching array
 
   if (origin) {
     if (allowedOrigins.includes(origin) || (origin.includes('ai-resume-optimizer') && origin.includes('.vercel.app'))) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin); // Echo exact requesting header back
     }
   }
 
@@ -203,7 +209,6 @@ app.post('/api/analyze', protect, upload.single('resume'), async (req, res) => {
       return res.status(500).json({ error: 'AI data mapping parsing crash.' });
     }
 
-    // CRITICAL FIX: Safe, explicit flattening of properties and sub-document properties
     const scanPayload = {
       userId: req.user._id, 
       fileName: file.originalname || 'Resume.pdf',
@@ -270,7 +275,6 @@ app.get('/api/history/:id', protect, async (req, res) => {
 // ==========================================
 app.delete('/api/history/:id', protect, async (req, res) => {
   try {
-    // Find the scan document and ensure it belongs to the authenticated user
     const scan = await Scan.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
     
     if (!scan) {
