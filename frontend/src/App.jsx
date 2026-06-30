@@ -22,8 +22,6 @@ import {
   Mail,
   User,
   LogOut,
-  Eye,
-  EyeOff,
   Download,
   Eye as ViewIcon,
   Menu,
@@ -151,7 +149,7 @@ function App() {
 
   const loadPastScan = async (id) => {
     setLoading(true);
-    setIsMobileVaultOpen(false); // Clean closing behavior for mobile slide-outs
+    setIsMobileVaultOpen(false);
     try {
       const response = await axios.get(`${API_BASE_URL}/api/history/${id}`, getAuthConfig());
       setResults(response.data);
@@ -308,7 +306,6 @@ function App() {
               {isMobileVaultOpen ? <X size={16} /> : <Menu size={16} />}
             </button>
           )}
-          {/* EXACT IDENTICAL BRAND LAYOUT SYNC */}
           <div className="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20">
             <Sparkles size={20} />
           </div>
@@ -337,8 +334,9 @@ function App() {
         )}
       </header>
 
-      {/* WORKSPACE MAIN COLUMNS */}
-      <div className="flex-1 w-full p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-hidden relative">
+      {/* WORKSPACE MAIN CONTAINER */}
+      {/* FIX: Set overflow-y-auto on mobile viewports so users can scroll through layout panels natively */}
+      <div className="flex-1 w-full p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden relative scrollbar-none">
         
         {/* PANEL 1: DESKTOP VAULT INDEX & MOBILE OVERLAY SLIDE-OUT */}
         <aside className={`
@@ -379,12 +377,13 @@ function App() {
         )}
 
         {/* PANEL 2: INPUT TARGETS */}
-        <section className="w-full lg:w-[28%] bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col overflow-hidden shadow-xl shrink-0">
+        {/* FIX: Removed structural element height boundaries on mobile to keep containers responsive */}
+        <section className="w-full lg:w-[28%] bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col overflow-visible lg:overflow-hidden shadow-xl shrink-0">
           <h2 className="text-xs font-bold uppercase tracking-wider mb-4 text-slate-300 flex items-center gap-2">
             <Layers size={14} className="text-indigo-400" /> Target Parameters
           </h2>
-          <form onSubmit={handleAnalyze} className="flex-1 flex flex-col justify-between overflow-hidden space-y-4">
-            <div className="flex-1 flex flex-col space-y-4 overflow-y-auto pr-1 scrollbar-thin">
+          <form onSubmit={handleAnalyze} className="flex-1 flex flex-col justify-between overflow-visible lg:overflow-hidden space-y-4">
+            <div className="flex-1 flex flex-col space-y-4 overflow-visible lg:overflow-y-auto pr-1 scrollbar-thin">
               <div>
                 <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Input Dossier (.pdf)</label>
                 <div {...getRootProps()} className={`border rounded-xl py-8 px-4 min-h-[120px] flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${isDragActive ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'}`}>
@@ -402,17 +401,18 @@ function App() {
               </div>
               <div className="flex-1 flex flex-col min-h-[140px] lg:min-h-[180px]">
                 <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Benchmark (JD)</label>
-                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste job profile parameters or technical requirements..." className="w-full flex-1 bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-none leading-relaxed" />
+                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste job profile parameters or technical requirements..." className="w-full flex-1 bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-none leading-relaxed min-h-[120px] lg:min-h-0" />
               </div>
             </div>
-            <button type="submit" disabled={loading || !file || !jobDescription.trim()} className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg flex justify-center items-center gap-2 cursor-pointer shrink-0 active:scale-[0.99]">
+            <button type="submit" disabled={loading || !file || !jobDescription.trim()} className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg flex justify-center items-center gap-2 cursor-pointer shrink-0 active:scale-[0.99] mt-2">
               {loading ? <RefreshCw className="animate-spin" size={13} /> : <><Zap size={13} />Run AI Optimization</>}
             </button>
           </form>
         </section>
 
         {/* PANEL 3: DYNAMIC WORKSPACE PORTAL */}
-        <section className="w-full lg:w-[50%] bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
+        {/* FIX: Adjusted height settings (`min-h-[480px] lg:min-h-0`) to give mobile streams a natural expansion limit */}
+        <section className="w-full lg:w-[50%] min-h-[480px] lg:min-h-0 bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
           <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-5 py-3 flex justify-between items-center shrink-0 gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
               <button type="button" onClick={() => setActiveTab('chat')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'chat' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
