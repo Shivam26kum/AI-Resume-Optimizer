@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import * as html2pdf from 'html2pdf.js'; // Robust CommonJS bundle matching rules for Vite
+import { useToaster } from 'react-toastella'; // Premium toast notification bridge injected perfectly
 import { 
   UploadCloud, 
   FileText, 
@@ -33,6 +34,9 @@ import {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
+  // Initialize react-toastella controller instance
+  const toast = useToaster();
+
   // Authentication States
   const [token, setToken] = useState(localStorage.getItem('userToken') || null);
   const [username, setUsername] = useState(localStorage.getItem('userName') || '');
@@ -53,7 +57,7 @@ function App() {
   // Responsive Navigation & UI Action States
   const [activeTab, setActiveTab] = useState('chat');
   const [isMobileVaultOpen, setIsMobileVaultOpen] = useState(false);
-  const [activeDropdownId, setActiveDropdownId] = useState(null); // Tracks which 3-dots menu is currently visible
+  const [activeDropdownId, setActiveDropdownId] = useState(null); 
   const resumePrintRef = useRef(null);
 
   const getAuthConfig = useCallback(() => {
@@ -73,6 +77,7 @@ function App() {
     setActiveTab('chat');
     setIsMobileVaultOpen(false);
     setActiveDropdownId(null);
+    toast.success('Successfully logged out of workspace.');
   };
 
   const fetchHistory = useCallback(async () => {
@@ -93,7 +98,6 @@ function App() {
     if (token) fetchHistory();
   }, [token, fetchHistory]);
 
-  // Global click tracking listener to dismiss 3-dots menus when clicking away
   useEffect(() => {
     const closeDropdowns = () => setActiveDropdownId(null);
     window.addEventListener('click', closeDropdowns);
@@ -113,13 +117,19 @@ function App() {
       setUsername(receivedName);
       setAuthForm({ username: '', email: '', password: '' });
       setShowPassword(false);
+      toast.success(`Welcome back, ${receivedName}! Authenticated successfully.`);
     } catch (error) {
-      setAuthError(error.response?.data?.error || 'Authentication failed');
+      const errorMsg = error.response?.data?.error || 'Authentication failed';
+      setAuthError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
   const onDrop = useCallback((acceptedFiles) => {
-    if (acceptedFiles[0]) setFile(acceptedFiles[0]);
+    if (acceptedFiles[0]) {
+      setFile(acceptedFiles[0]);
+      toast.success(`Dossier attached: ${acceptedFiles[0].name}`);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -136,6 +146,7 @@ function App() {
     setLoading(true);
     setResults(null);
     setActiveTab('chat');
+    toast.info('AI Engine running resume analysis sequence...');
 
     const formData = new FormData();
     formData.append('resume', file);
@@ -149,9 +160,11 @@ function App() {
         }
       });
       setResults(response.data);
+      toast.success('Optimization scan completed successfully!');
       fetchHistory();
     } catch (error) {
-      alert(error.response?.data?.error || "Pipeline processing failure.");
+      // FIX: Replaced native window alert with react-toastella error handler
+      toast.error(error.response?.data?.error || "Pipeline processing failure.");
     } finally {
       setLoading(false);
     }
@@ -166,37 +179,40 @@ function App() {
       setJobDescription(response.data.jobDescription || '');
       setFile({ name: response.data.fileName });
       setActiveTab('chat');
+      toast.success('Historical audit log loaded into workspace.');
     } catch (error) {
       console.error(error);
+      toast.error('Failed to parse historical file record parameters.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Secure API connection method to handle vault purges
   const handleDeleteScan = async (e, id) => {
-    e.stopPropagation(); // Prevents loading the scan when clicking delete
+    e.stopPropagation(); 
     if (!window.confirm("Are you sure you want to permanently delete this optimization scan?")) return;
 
     try {
       await axios.delete(`${API_BASE_URL}/api/history/${id}`, getAuthConfig());
       
-      // If the currently viewed scan is the one being deleted, reset the workspace view
       if (results && results._id === id) {
         setResults(null);
         setFile(null);
         setJobDescription('');
       }
       
+      toast.success('Scan entry permanently purged from vault ledger.');
       fetchHistory();
     } catch (error) {
-      alert(error.response?.data?.error || "Failed to remove item from vault.");
+      // FIX: Replaced native window alert with react-toastella error handler
+      toast.error(error.response?.data?.error || "Failed to remove item from vault.");
     }
   };
 
   const copyToClipboard = (text, index) => {
     navigator.clipboard.writeText(text);
     setCopiedId(index);
+    toast.success('Optimized line copied to clipboard buffer!');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -208,6 +224,8 @@ function App() {
   const handleExportPDF = () => {
     const element = resumePrintRef.current;
     if (!element) return;
+    
+    toast.info('Compiling print engines for document distribution...');
 
     const opt = {
       margin:       [0.5, 0.5, 0.5, 0.5],
@@ -219,6 +237,7 @@ function App() {
 
     const pdfEngine = html2pdf.default || html2pdf;
     pdfEngine().set(opt).from(element).save();
+    toast.success('Official PDF exported successfully!');
   };
 
   const renderOptimizedResumeBody = () => {
@@ -395,12 +414,11 @@ function App() {
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${log.matchPercentage >= 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{log.matchPercentage}%</span>
                 </div>
                 
-                {/* 3-DOTS CONTEXT TOGGLE LINK CONTAINER */}
                 <div className="absolute right-2.5 top-3.5 z-10">
                   <button 
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation(); // Block default card loading trigger
+                      e.stopPropagation(); 
                       setActiveDropdownId(activeDropdownId === log._id ? null : log._id);
                     }}
                     className="p-1 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-md transition cursor-pointer"
@@ -408,7 +426,6 @@ function App() {
                     <MoreVertical size={14} />
                   </button>
                   
-                  {/* FLOATING ACTION DROPDOWN */}
                   {activeDropdownId === log._id && (
                     <div className="absolute right-0 mt-1 w-28 bg-slate-900 border border-slate-800 rounded-lg shadow-xl py-1 z-20 animate-fade-in">
                       <button
