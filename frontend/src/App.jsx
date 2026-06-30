@@ -25,10 +25,11 @@ import {
   Download,
   Eye as ViewIcon,
   Menu,
-  X
+  X,
+  MoreVertical,
+  Trash2
 } from 'lucide-react';
 
-// Resolves environmental URLs dynamically based on your deployment context
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 function App() {
@@ -49,9 +50,10 @@ function App() {
   const [historyList, setHistoryList] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   
-  // Responsive Navigation States
+  // Responsive Navigation & UI Action States
   const [activeTab, setActiveTab] = useState('chat');
   const [isMobileVaultOpen, setIsMobileVaultOpen] = useState(false);
+  const [activeDropdownId, setActiveDropdownId] = useState(null); // Tracks which 3-dots menu is currently visible
   const resumePrintRef = useRef(null);
 
   const getAuthConfig = useCallback(() => {
@@ -70,6 +72,7 @@ function App() {
     setShowPassword(false);
     setActiveTab('chat');
     setIsMobileVaultOpen(false);
+    setActiveDropdownId(null);
   };
 
   const fetchHistory = useCallback(async () => {
@@ -89,6 +92,13 @@ function App() {
   useEffect(() => {
     if (token) fetchHistory();
   }, [token, fetchHistory]);
+
+  // Global click tracking listener to dismiss 3-dots menus when clicking away
+  useEffect(() => {
+    const closeDropdowns = () => setActiveDropdownId(null);
+    window.addEventListener('click', closeDropdowns);
+    return () => window.removeEventListener('click', closeDropdowns);
+  }, []);
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
@@ -160,6 +170,27 @@ function App() {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Secure API connection method to handle vault purges
+  const handleDeleteScan = async (e, id) => {
+    e.stopPropagation(); // Prevents loading the scan when clicking delete
+    if (!window.confirm("Are you sure you want to permanently delete this optimization scan?")) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/api/history/${id}`, getAuthConfig());
+      
+      // If the currently viewed scan is the one being deleted, reset the workspace view
+      if (results && results._id === id) {
+        setResults(null);
+        setFile(null);
+        setJobDescription('');
+      }
+      
+      fetchHistory();
+    } catch (error) {
+      alert(error.response?.data?.error || "Failed to remove item from vault.");
     }
   };
 
@@ -335,7 +366,6 @@ function App() {
       </header>
 
       {/* WORKSPACE MAIN CONTAINER */}
-      {/* FIX: Set overflow-y-auto on mobile viewports so users can scroll through layout panels natively */}
       <div className="flex-1 w-full p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden relative scrollbar-none">
         
         {/* PANEL 1: DESKTOP VAULT INDEX & MOBILE OVERLAY SLIDE-OUT */}
@@ -355,11 +385,43 @@ function App() {
               <div className="text-center py-12 text-xs text-slate-500 font-mono">Vault entry buffer empty.</div>
             )}
             {historyList.map((log) => (
-              <button key={log._id} onClick={() => loadPastScan(log._id)} className="w-full text-left bg-slate-900/40 hover:bg-indigo-950/20 border border-slate-800/60 hover:border-indigo-500/30 p-3.5 rounded-xl transition active:scale-[0.99] block cursor-pointer group">
-                <div className="flex justify-between items-start gap-3 mb-2">
+              <button 
+                key={log._id} 
+                onClick={() => loadPastScan(log._id)} 
+                className="w-full text-left bg-slate-900/40 hover:bg-indigo-950/20 border border-slate-800/60 hover:border-indigo-500/30 p-3.5 rounded-xl transition active:scale-[0.99] block cursor-pointer group relative"
+              >
+                <div className="flex justify-between items-start gap-3 mb-2 pr-6">
                   <p className="text-xs font-medium text-slate-300 truncate flex-1 group-hover:text-indigo-400 transition">{log.fileName}</p>
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${log.matchPercentage >= 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{log.matchPercentage}%</span>
                 </div>
+                
+                {/* 3-DOTS CONTEXT TOGGLE LINK CONTAINER */}
+                <div className="absolute right-2.5 top-3.5 z-10">
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Block default card loading trigger
+                      setActiveDropdownId(activeDropdownId === log._id ? null : log._id);
+                    }}
+                    className="p-1 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-md transition cursor-pointer"
+                  >
+                    <MoreVertical size={14} />
+                  </button>
+                  
+                  {/* FLOATING ACTION DROPDOWN */}
+                  {activeDropdownId === log._id && (
+                    <div className="absolute right-0 mt-1 w-28 bg-slate-900 border border-slate-800 rounded-lg shadow-xl py-1 z-20 animate-fade-in">
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteScan(e, log._id)}
+                        className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-rose-400 hover:bg-rose-950/30 flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Trash2 size={12} /> Delete Scan
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
                   <Calendar size={10} />{formatTimestamp(log.createdAt)}
                 </div>
@@ -377,7 +439,6 @@ function App() {
         )}
 
         {/* PANEL 2: INPUT TARGETS */}
-        {/* FIX: Removed structural element height boundaries on mobile to keep containers responsive */}
         <section className="w-full lg:w-[28%] bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col overflow-visible lg:overflow-hidden shadow-xl shrink-0">
           <h2 className="text-xs font-bold uppercase tracking-wider mb-4 text-slate-300 flex items-center gap-2">
             <Layers size={14} className="text-indigo-400" /> Target Parameters
@@ -411,7 +472,6 @@ function App() {
         </section>
 
         {/* PANEL 3: DYNAMIC WORKSPACE PORTAL */}
-        {/* FIX: Adjusted height settings (`min-h-[480px] lg:min-h-0`) to give mobile streams a natural expansion limit */}
         <section className="w-full lg:w-[50%] min-h-[480px] lg:min-h-0 bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
           <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-5 py-3 flex justify-between items-center shrink-0 gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
@@ -513,7 +573,6 @@ function App() {
                 </button>
               </div>
 
-              {/* HORIZONTAL EMBED CANVAS SCROLLER FOR ALL RESPONSIVE VIEWPORTS */}
               <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-start items-start bg-slate-950/40 scrollbar-thin">
                 <div className="min-w-[816px] bg-slate-900 p-1 border border-slate-800 shadow-xl rounded-md mx-auto">
                   <div 

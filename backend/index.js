@@ -267,3 +267,22 @@ app.get('/api/history/:id', protect, async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Secure Server processing active on port ${PORT}`));
+
+// ==========================================
+// DELETE SPECIFIC RECORD FROM VAULT (PROTECTED)
+// ==========================================
+app.delete('/api/history/:id', protect, async (req, res) => {
+  try {
+    // Find the scan document and ensure it belongs to the authenticated user
+    const scan = await Scan.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    
+    if (!scan) {
+      return res.status(404).json({ error: 'Record not found or unauthorized deletion request.' });
+    }
+
+    return res.json({ message: 'Scan entry permanently purged from vault ledger.' });
+  } catch (error) {
+    console.error("Delete Record Error:", error);
+    return res.status(500).json({ error: 'Failed to complete database deletion sequence.' });
+  }
+});
