@@ -63,8 +63,8 @@ function App() {
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
-  // Active Template Layout Selection Matrix ('tech', 'corporate', 'minimal', 'slate', 'editorial')
-  const [selectedTemplate, setSelectedTemplate] = useState('tech');
+  // 5 Distinct Template Style Options Tracker ('classicTech', 'executive', 'minimal', 'modernMinimal', 'editorial')
+  const [selectedTemplate, setSelectedTemplate] = useState('classicTech');
 
   const getAuthConfig = useCallback(() => {
     return { headers: { Authorization: `Bearer ${token}` } };
@@ -296,21 +296,21 @@ function App() {
     });
   };
 
-  // CLEAN ATS MAPPING ENGINE: Generates five styled templates without highlighting markers
+  // CLEAN ATS MAPPING ENGINE: Fully structured dynamic layout styles with 5 selectable templates
   const renderCleanResumeBody = () => {
-    const blueprints = {
-      tech: {
+    const designs = {
+      classicTech: {
         container: { fontFamily: 'Arial, sans-serif', color: '#1e293b', width: '100%', lineHeight: '1.4' },
-        name: { color: '#1e40af', fontSize: '21px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
+        name: { color: '#1e40af', fontSize: '22px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
         meta: { color: '#475569', fontSize: '10px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
-        heading: { color: '#1d4ed8', fontSize: '11.5px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '14px', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' },
-        subHeading: { color: '#0f172a', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
+        heading: { color: '#1d4ed8', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
+        subHeading: { color: '#0f172a', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
         bulletText: { color: '#334155', fontSize: '10px', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
         plainText: { color: '#334155', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
-      corporate: {
+      executive: {
         container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%', lineHeight: '1.4' },
-        name: { color: '#000000', fontSize: '19px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
+        name: { color: '#000000', fontSize: '20px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
         meta: { color: '#111111', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
         heading: { color: '#000000', fontSize: '11.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
         subHeading: { color: '#000000', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
@@ -319,35 +319,36 @@ function App() {
       },
       minimal: {
         container: { fontFamily: 'Segoe UI, Arial, sans-serif', color: '#1c1917', width: '100%', lineHeight: '1.4' },
-        name: { color: '#1c1917', fontSize: '20px', fontWeight: '700', textAlign: 'left', margin: '0' },
+        name: { color: '#1c1917', fontSize: '22px', fontWeight: '700', textAlign: 'left', margin: '0' },
         meta: { color: '#44403c', fontSize: '10px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
         heading: { color: '#44403c', fontSize: '11.5px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
         subHeading: { color: '#1c1917', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
         bulletText: { color: '#292524', fontSize: '10px', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
         plainText: { color: '#292524', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
-      slate: {
-        container: { fontFamily: 'Verdana, sans-serif', color: '#334155', width: '100%', lineHeight: '1.4' },
-        name: { color: '#0f172a', fontSize: '19px', fontWeight: '700', textAlign: 'left', margin: '0 0 2px 0' },
-        meta: { color: '#64748b', fontSize: '9.5px', fontWeight: '400', textAlign: 'left', marginBottom: '12px', paddingBottom: '4px' },
-        heading: { color: '#475569', fontSize: '11px', fontWeight: '700', backgroundColor: '#f1f5f9', padding: '3px 6px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase' },
-        subHeading: { color: '#0f172a', fontSize: '10px', fontWeight: '700', marginTop: '3px', marginBottom: '1px' },
-        bulletText: { color: '#334155', fontSize: '9.5px', margin: '1px 0 1px 12px', textIndent: '-12px', textAlign: 'justify' },
-        plainText: { color: '#334155', fontSize: '9.5px', margin: '1px 0', textAlign: 'justify' }
+      modernMinimal: {
+        container: { fontFamily: 'Verdana, Geneva, sans-serif', color: '#334155', width: '100%', lineHeight: '1.4' },
+        name: { color: '#0f172a', fontSize: '21px', fontWeight: '700', textAlign: 'left', margin: '0 0 2px 0', letterSpacing: '-0.03em' },
+        meta: { color: '#64748b', fontSize: '9.5px', fontWeight: '400', textAlign: 'left', marginBottom: '16px', paddingBottom: '4px', borderBottom: '1px solid #f1f5f9' },
+        heading: { color: '#475569', fontSize: '11px', fontWeight: '700', borderBottom: '2px solid #cbd5e1', paddingBottom: '2px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase' },
+        subHeading: { color: '#0f172a', fontSize: '10px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
+        bulletText: { color: '#334155', fontSize: '9.5px', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
+        plainText: { color: '#334155', fontSize: '9.5px', margin: '2px 0', textAlign: 'justify' }
       },
       editorial: {
         container: { fontFamily: 'Georgia, serif', color: '#1c1917', width: '100%', lineHeight: '1.5' },
-        name: { color: '#431407', fontSize: '21px', fontWeight: '400', textAlign: 'center', margin: '0 0 2px 0', fontStyle: 'italic' },
-        meta: { color: '#7c2d12', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '16px', borderBottom: '1px dashed #7c2d12', paddingBottom: '6px' },
-        heading: { color: '#7c2d12', fontSize: '12px', fontWeight: '600', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', textAlign: 'left' },
+        name: { color: '#431407', fontSize: '23px', fontWeight: '400', textAlign: 'center', margin: '0 0 2px 0', fontStyle: 'italic' },
+        meta: { color: '#7c2d12', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '18px', borderBottom: '1px dashed #7c2d12', paddingBottom: '6px' },
+        heading: { color: '#7c2d12', fontSize: '12px', fontWeight: '600', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', borderLeft: '4px solid #7c2d12', paddingLeft: '8px' },
         subHeading: { color: '#1c1917', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
         bulletText: { color: '#1c1917', fontSize: '10px', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
         plainText: { color: '#1c1917', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       }
     };
 
-    const style = blueprints[selectedTemplate] || blueprints.tech;
+    const style = designs[selectedTemplate] || designs.classicTech;
 
+    // High fidelity data structure synchronised accurately with your raw credentials
     const resumeData = {
       name: "SHIVAM KUMAR",
       title: "Fresher | Frontend Developer | Web Developer",
@@ -479,14 +480,19 @@ function App() {
           </div>
         </div>
 
-        {/* FIXED: Removed horizontal layout split row parameters to prevent overlapping stacks */}
+        {/* FIXED: Lists out data points on distinct row tags with bullet points instead of a combined single line */}
         <div style={{ pageBreakInside: 'avoid' }}>
           <h2 style={style.heading}>Soft Skills</h2>
-          <p style={style.plainText}>{resumeData.softSkills.join('  •  ')}</p>
+          {resumeData.softSkills.map((skill, idx) => (
+            <p key={idx} style={style.bulletText}>• {skill}</p>
+          ))}
         </div>
+        
         <div style={{ pageBreakInside: 'avoid' }}>
           <h2 style={style.heading}>Languages</h2>
-          <p style={style.plainText}>{resumeData.languages.join('  •  ')}</p>
+          {resumeData.languages.map((lang, idx) => (
+            <p key={idx} style={style.bulletText}>• {lang}</p>
+          ))}
         </div>
       </div>
     );
@@ -597,7 +603,7 @@ function App() {
         {token && (
           <div className="flex items-center gap-2 sm:gap-4 animate-fade-in">
             <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">{username.charAt(0)}</div>
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shadow-sm shrink-0">{username.charAt(0)}</div>
               <div className="flex flex-col text-left max-w-[80px] sm:max-w-[120px]">
                 <span className="text-xs font-semibold text-slate-200 tracking-wide capitalize truncate">{username}</span>
                 <span className="text-[9px] font-medium text-emerald-400 flex items-center gap-1 font-mono leading-none mt-0.5">
@@ -613,7 +619,7 @@ function App() {
       {/* WORKSPACE MAIN CONTAINER */}
       <div className="flex-1 w-full p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden relative scrollbar-none">
         
-        {/* PANEL 1: VAULT INDEX */}
+        {/* PANEL 1: DESKTOP VAULT INDEX & MOBILE OVERLAY SLIDE-OUT */}
         <aside className={`fixed inset-y-0 left-0 z-30 w-[280px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col overflow-hidden transition-transform duration-300 transform mt-[73px] lg:mt-0 lg:static lg:w-[22%] lg:bg-slate-900/40 lg:border lg:border-slate-800/60 lg:rounded-2xl lg:transform-none ${isMobileVaultOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 px-1"><History size={14} className="text-indigo-400" /> Audit Vault</h2>
           <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-slate-800">
@@ -673,7 +679,7 @@ function App() {
         </section>
 
         {/* PANEL 3: DYNAMIC WORKSPACE PORTAL */}
-        <section className="w-full lg:w-[50%] min-h-[480px] lg:min-h-0 bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
+        <section className="w-full lg:w-[50%] min-h-[520px] lg:min-h-0 bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
           <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-5 py-3 flex justify-between items-center shrink-0 gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
               <button type="button" onClick={() => setActiveTab('chat')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'chat' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
@@ -764,10 +770,10 @@ function App() {
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
               
-              {/* ATS TEMPLATE SELECTOR TOOLBAR (5 DISTINCT DESIGN VARIATIONS) */}
+              {/* ATS TEMPLATE TOOLBAR (5 DISTINCTIONS CHIPS SELECTOR) */}
               <div className="p-3 bg-slate-950/60 border-b border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 gap-3">
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                  <span className="text-[11px] text-slate-400 font-mono mr-1">Design Style Ideas:</span>
+                  <span className="text-[11px] text-slate-400 font-mono mr-1">Design Styles:</span>
                   <div className="flex flex-wrap bg-slate-950 p-0.5 rounded-lg border border-slate-800 gap-0.5">
                     <button type="button" onClick={() => setSelectedTemplate('tech')} className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${selectedTemplate === 'tech' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Modern Tech</button>
                     <button type="button" onClick={() => setSelectedTemplate('corporate')} className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${selectedTemplate === 'corporate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Corporate</button>
@@ -785,9 +791,9 @@ function App() {
                 </button>
               </div>
 
-              {/* RESPONSIVE SCROLLER: Standard touch behavior on phone screens, clear centered A4 layout frame on desktop viewports */}
-              <div className="flex-1 overflow-x-auto lg:overflow-y-auto p-2 sm:p-6 bg-slate-950/40 scrollbar-thin flex justify-start lg:justify-center items-start">
-                <div className="w-full max-w-[210mm] lg:w-[210mm] bg-white p-6 sm:p-12 shadow-2xl rounded-md mx-auto overflow-hidden">
+              {/* RESPONSIVE SCROLLER: Standard vertical touch scrolling on all phone viewports without horizontal breakdown widths */}
+              <div className="flex-1 overflow-y-auto p-2 sm:p-6 bg-slate-950/40 scrollbar-thin flex justify-center items-start w-full">
+                <div className="w-full max-w-full lg:max-w-[210mm] lg:w-[210mm] bg-white p-6 sm:p-12 shadow-2xl rounded-md mx-auto overflow-hidden">
                   <div 
                     ref={resumePrintRef}
                     className="w-full text-left bg-white"
