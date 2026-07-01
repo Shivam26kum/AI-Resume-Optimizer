@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
-import * as html2pdf from 'html2pdf.js'; 
-import { ToastContainer, toast } from 'react-toastify'; 
-import 'react-toastify/dist/ReactToastify.css'; 
+import * as html2pdf from 'html2pdf.js'; // Robust CommonJS bundle matching rules for Vite
+import { ToastContainer, toast } from 'react-toastify'; // Premium Toast Engine Injection
+import 'react-toastify/dist/ReactToastify.css'; // Essential base stylesheet for smooth slide animations
 import { 
   UploadCloud, 
   FileText, 
@@ -31,7 +31,8 @@ import {
   X,
   MoreVertical,
   Trash2,
-  Layout
+  Trophy,
+  Briefcase
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -65,8 +66,8 @@ function App() {
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
-  // Active Template State Id (modern, minimalist, elegant)
-  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  // Active Template State Idea Layout ID ('tech', 'executive', 'creative')
+  const [selectedTemplate, setSelectedTemplate] = useState('tech');
 
   const getAuthConfig = useCallback(() => {
     return { headers: { Authorization: `Bearer ${token}` } };
@@ -251,7 +252,7 @@ function App() {
 
     const opt = {
       margin:       [0.4, 0.4, 0.4, 0.4],
-      filename:     `Optimized_Resume_${username || 'User'}.pdf`,
+      filename:     `Clean_ATS_Optimized_Resume.pdf`,
       image:        { type: 'jpeg', quality: 1.0 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -259,16 +260,56 @@ function App() {
 
     const pdfEngine = html2pdf.default || html2pdf;
     pdfEngine().set(opt).from(element).save();
-    toast.success('Official ATS-optimized PDF exported successfully!');
+    toast.success('Official clean ATS PDF exported successfully!');
   };
 
-  // HELPER FUNCTION: Generates clean, high-grade typography styles without highlighting markers
+  // DIAGNOSTIC RENDERER: Renders user mistakes vs corrections highlighted in green
+  const renderOptimizedResumeBody = () => {
+    if (!results || !results.resumeRawText) {
+      return <p style={{ color: '#94a3b8', fontStyle: 'italic', textAlign: 'center' }}>Raw layout text unavailable. Please complete a fresh scan.</p>;
+    }
+
+    let dynamicBodyText = results.resumeRawText;
+
+    results.actionableImprovements?.forEach((item) => {
+      if (item.currentText && item.suggestedText) {
+        const cleanCurrent = item.currentText.trim();
+        if (dynamicBodyText.includes(cleanCurrent)) {
+          dynamicBodyText = dynamicBodyText.split(cleanCurrent).join(
+            `__OPTIMIZED_START__${item.suggestedText}__OPTIMIZED_END__`
+          );
+        }
+      }
+    });
+
+    return dynamicBodyText.split('\n').map((line, idx) => {
+      if (!line.trim()) return <div key={idx} className="h-2" />;
+
+      if (line.includes('__OPTIMIZED_START__')) {
+        const cleanLine = line
+          .replace(/__OPTIMIZED_START__/g, '')
+          .replace(/__OPTIMIZED_END__/g, '');
+        return (
+          <p 
+            key={idx} 
+            className="text-emerald-800 bg-emerald-50 border-l-2 border-emerald-500 font-medium pl-2 my-1 py-0.5 rounded select-none text-[11px]"
+          >
+            {cleanLine}
+          </p>
+        );
+      }
+
+      return <p key={idx} className="text-slate-300 my-0.5 text-[11px] text-justify leading-relaxed">{line}</p>;
+    });
+  };
+
+  // ATS-FRIENDLY CLEAN RENDERER: Applies corrections smoothly with ZERO highlights and explicit layout spacing rules
   const renderCleanResumeBody = () => {
     if (!results || !results.resumeRawText) return null;
 
     let dynamicBodyText = results.resumeRawText;
 
-    // Apply corrections inline completely silently
+    // Apply all optimizations smoothly into the text block silently
     results.actionableImprovements?.forEach((item) => {
       if (item.currentText && item.suggestedText) {
         const cleanCurrent = item.currentText.trim();
@@ -278,57 +319,101 @@ function App() {
       }
     });
 
-    // Style Configuration Mapping matrices based on the template selection context
+    // Dynamic Style Matrices matching specific ATS layout standard ideas
     const templateStyles = {
-      modern: {
-        heading: { color: '#1e3a8a', fontSize: '18px', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginTop: '16px', textTransform: 'uppercase', tracking: '0.05em' },
-        subHeading: { color: '#334155', fontSize: '12px', fontWeight: 'bold', marginTop: '6px' },
-        bodyText: { color: '#1e293b', fontSize: '11px', lineHeight: '1.6', marginTop: '2px', textAlign: 'justify' }
+      tech: {
+        container: { fontFamily: 'Segoe UI, Helvetica, Arial, sans-serif', color: '#1e293b' },
+        name: { color: '#0f172a', fontSize: '24px', fontWeight: '800', textAlign: 'left', letterSpacing: '-0.02em', margin: '0 0 2px 0' },
+        meta: { color: '#475569', fontSize: '11px', fontWeight: '500', textAlign: 'left', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+        heading: { color: '#1e40af', fontSize: '14px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '3px', marginTop: '18px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+        subHeading: { color: '#1e293b', fontSize: '11.5px', fontWeight: '700', marginTop: '6px', display: 'flex', justifyContent: 'between' },
+        bodyText: { color: '#334155', fontSize: '11px', lineHeight: '1.6', marginTop: '2px', textIndent: '-12px', paddingLeft: '12px', textAlign: 'justify' }
       },
-      minimalist: {
-        heading: { color: '#000000', fontSize: '15px', fontWeight: 'bold', borderBottom: '1.5px solid #000000', paddingBottom: '2px', marginTop: '14px', textTransform: 'uppercase', tracking: '0.1em' },
-        subHeading: { color: '#000000', fontSize: '11.5px', fontWeight: 'bold', marginTop: '4px' },
-        bodyText: { color: '#27272a', fontSize: '10.5px', lineHeight: '1.5', marginTop: '2px', textAlign: 'justify' }
+      executive: {
+        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000' },
+        name: { color: '#000000', fontSize: '22px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' },
+        meta: { color: '#27272a', fontSize: '11px', fontWeight: '400', textAlign: 'center', marginBottom: '18px', borderBottom: '1px solid #000000', paddingBottom: '8px' },
+        heading: { color: '#000000', fontSize: '13px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'center' },
+        subHeading: { color: '#000000', fontSize: '11.5px', fontWeight: '700', marginTop: '5px' },
+        bodyText: { color: '#18181b', fontSize: '11px', lineHeight: '1.5', marginTop: '3px', textIndent: '-14px', paddingLeft: '14px', textAlign: 'justify' }
       },
-      elegant: {
-        heading: { color: '#4c1d95', fontSize: '17px', fontFamily: 'Georgia, serif', fontStyle: 'italic', borderBottom: '1px dashed #c084fc', paddingBottom: '3px', marginTop: '16px' },
-        subHeading: { color: '#581c87', fontSize: '12px', fontWeight: 'bold', marginTop: '5px' },
-        bodyText: { color: '#3b0764', fontSize: '11px', lineHeight: '1.6', marginTop: '3px', textAlign: 'justify' }
+      creative: {
+        container: { fontFamily: 'Calibri, Candara, sans-serif', color: '#2e1065' },
+        name: { color: '#4c1d95', fontSize: '26px', fontWeight: '700', textAlign: 'left', margin: '0 0 2px 0' },
+        meta: { color: '#6b21a8', fontSize: '11px', fontWeight: '500', textAlign: 'left', marginBottom: '22px', fontStyle: 'italic' },
+        heading: { color: '#7e22ce', fontSize: '15px', fontWeight: '600', borderBottom: '2px dashed #e9d5ff', paddingBottom: '4px', marginTop: '20px', marginBottom: '8px' },
+        subHeading: { color: '#2e1065', fontSize: '12px', fontWeight: '700', marginTop: '6px' },
+        bodyText: { color: '#4c1d95', fontSize: '11.5px', lineHeight: '1.6', marginTop: '3px', textIndent: '-12px', paddingLeft: '12px', textAlign: 'justify' }
       }
     };
 
-    const currentStyle = templateStyles[selectedTemplate] || templateStyles.modern;
+    const currentStyle = templateStyles[selectedTemplate] || templateStyles.tech;
 
-    return dynamicBodyText.split('\n').map((line, idx) => {
-      const trimmed = line.trim();
-      if (!trimmed) return <div key={idx} className="h-2" />;
+    // Parse text stream lines cleanly and map HTML hierarchy structures dynamically
+    const lines = dynamicBodyText.split('\n');
+    let hasRenderedHeader = false;
 
-      // Structural Line Detector (Identifies Section Dividers like Experience, Education, Skills)
-      const isHeader = trimmed.length < 35 && /^(objective|summary|experience|employment|work history|education|skills|technical skills|projects|languages|certifications|awards|interests)/i.test(trimmed);
-      const isSubHeader = trimmed.length < 80 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed)));
+    return (
+      <div style={currentStyle.container} className="w-full h-full">
+        {lines.map((line, idx) => {
+          const trimmed = line.trim();
+          if (!trimmed) return <div key={idx} className="h-1" />;
 
-      if (isHeader) {
-        return (
-          <h3 key={idx} style={currentStyle.heading}>
-            {trimmed}
-          </h3>
-        );
-      }
+          // Rule 1: The very first solid line is parsed as the Applicant's Name
+          if (!hasRenderedHeader && trimmed.length < 40 && !trimmed.includes('|') && !trimmed.includes('@')) {
+            hasRenderedHeader = true;
+            
+            // Look ahead for meta info strings
+            let nextMetaLine = '';
+            if (lines[idx + 1] && (lines[idx + 1].includes('|') || lines[idx + 1].includes('@') || lines[idx + 1].includes('Developer'))) {
+              nextMetaLine = lines[idx + 1].trim();
+              lines[idx + 1] = ''; // Absorb it
+            }
 
-      if (isSubHeader) {
-        return (
-          <h4 key={idx} style={currentStyle.subHeading}>
-            {trimmed}
-          </h4>
-        );
-      }
+            return (
+              <div key={idx} className="w-full">
+                <h1 style={currentStyle.name}>{trimmed}</h1>
+                {nextMetaLine && <p style={currentStyle.meta}>{nextMetaLine}</p>}
+              </div>
+            );
+          }
 
-      return (
-        <p key={idx} style={currentStyle.bodyText}>
-          {trimmed.startsWith('•') || trimmed.startsWith('-') ? trimmed : `• ${trimmed}`}
-        </p>
-      );
-    });
+          // Rule 2: Recognize section boundaries natively (e.g., EXPERIENCE, SUMMARY, PROJECTS)
+          const isSectionTitle = trimmed.length < 35 && /^(objective|summary|experience|employment|work history|education|skills|technical skills|projects|languages|certifications|awards|interests)/i.test(trimmed);
+          
+          // Rule 3: Recognize title role headers natively
+          const isRoleSubHeader = trimmed.length < 90 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed)));
+
+          if (isSectionTitle) {
+            return (
+              <h2 key={idx} style={currentStyle.heading}>
+                {trimmed}
+              </h2>
+            );
+          }
+
+          if (isRoleSubHeader) {
+            return (
+              <div key={idx} style={currentStyle.subHeading} className="flex justify-between w-full">
+                <span>{trimmed}</span>
+              </div>
+            );
+          }
+
+          // Rule 4: Clean bullets rendering natively without any marker artifacts or highlighting spans
+          let cleanLine = trimmed;
+          if (cleanLine.startsWith('•') || cleanLine.startsWith('-')) {
+            cleanLine = cleanLine.substring(1).trim();
+          }
+
+          return (
+            <p key={idx} style={currentStyle.bodyText}>
+              • {cleanLine}
+            </p>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -359,7 +444,7 @@ function App() {
                 <input type="text" required value={deleteConfirmationInput} onChange={(e) => setDeleteConfirmationInput(e.target.value)} placeholder="Paste or type exact target filename..." className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-rose-500/50 transition" />
               </div>
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <button type="button" onClick={() => { setDeleteModalOpen(false); setTargetDeleteLog(null); }} className="py-2.5 border border-slate-800 hover:border-slate-700 bg-slate-400/5 text-slate-300 font-semibold text-xs rounded-xl transition cursor-pointer">Cancel</button>
+                <button type="button" onClick={() => { setDeleteModalOpen(false); setTargetDeleteLog(null); }} className="py-2.5 border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400 hover:text-slate-200 font-semibold text-xs rounded-xl transition cursor-pointer">Cancel</button>
                 <button type="submit" disabled={deleteConfirmationInput !== targetDeleteLog.fileName} className="py-2.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-lg flex justify-center items-center gap-1.5 cursor-pointer">
                   <Trash2 size={13} /> Confirm Delete
                 </button>
@@ -435,7 +520,7 @@ function App() {
         
         {token && (
           <div className="flex items-center gap-2 sm:gap-4 animate-fade-in">
-            <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner">
+            <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner animate-fade-in">
               <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">{username.charAt(0)}</div>
               <div className="flex flex-col text-left max-w-[80px] sm:max-w-[120px]">
                 <span className="text-xs font-semibold text-slate-200 tracking-wide capitalize truncate">{username}</span>
@@ -502,7 +587,7 @@ function App() {
               </div>
               <div className="flex-1 flex flex-col min-h-[140px] lg:min-h-[180px]">
                 <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Benchmark (JD)</label>
-                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste job profile requirements..." className="w-full flex-1 bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-none leading-relaxed min-h-[120px] lg:min-h-0" />
+                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste target requirements..." className="w-full flex-1 bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-none leading-relaxed min-h-[120px] lg:min-h-0" />
               </div>
             </div>
             <button type="submit" disabled={loading || !file || !jobDescription.trim()} className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg flex justify-center items-center gap-2 cursor-pointer shrink-0 active:scale-[0.99] mt-2">
@@ -516,11 +601,11 @@ function App() {
           <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-5 py-3 flex justify-between items-center shrink-0 gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
               <button type="button" onClick={() => setActiveTab('chat')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'chat' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-                <MessageSquare size={13} /> Optimization dashboard
+                <MessageSquare size={13} /> Optimization Dashboard
               </button>
               {results && (
                 <button type="button" onClick={() => setActiveTab('preview')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'preview' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-                  <Layout size={13} /> ATS Resume Canvas
+                  <Briefcase size={13} /> ATS Resume Canvas
                 </button>
               )}
             </div>
@@ -531,7 +616,7 @@ function App() {
             )}
           </div>
 
-          {/* TAB 1: OPTIMIZATION STREAM (User Reviews Mistakes and Corrections) */}
+          {/* TAB 1: DIAGNOSTIC STREAM (Mistakes vs Corrections View) */}
           {activeTab === 'chat' && (
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-950/20 scrollbar-thin">
               {loading && (
@@ -599,35 +684,40 @@ function App() {
             </div>
           )}
 
-          {/* TAB 2: DOCUMENT EXPORTER CANVASES (Fully Styled Clean Templates Without Highlight Indicators) */}
+          {/* TAB 2: ATS RESUME CANVAS (Clean Export View without highlights) */}
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
               
-              {/* STYLE DESIGN IDEAS TEMPLATE CONFIGURATOR SELECTOR BAR */}
+              {/* ATS TEMPLATE TOOLBAR IDEAS */}
               <div className="p-3 bg-slate-950/60 border-b border-slate-800 flex flex-col xs:flex-row justify-between items-start xs:items-center shrink-0 gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-400 font-mono mr-1">ATS Idea Styles:</span>
+                  <span className="text-[11px] text-slate-400 font-mono mr-1">ATS Layouts:</span>
                   <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-                    <button type="button" onClick={() => setSelectedTemplate('modern')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'modern' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Modern Tech</button>
-                    <button type="button" onClick={() => setSelectedTemplate('minimalist')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'minimalist' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Executive</button>
-                    <button type="button" onClick={() => setSelectedTemplate('elegant')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'elegant' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Creative</button>
+                    <button type="button" onClick={() => setSelectedTemplate('tech')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'tech' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Modern Tech</button>
+                    <button type="button" onClick={() => setSelectedTemplate('executive')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'executive' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Corporate</button>
+                    <button type="button" onClick={() => setSelectedTemplate('creative')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'creative' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Creative Serif</button>
                   </div>
                 </div>
-                <button type="button" onClick={handleExportPDF} className="w-full xs:w-auto py-1.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow-md cursor-pointer active:scale-[0.99]"><Download size={13} /> Download Clean Resume</button>
+                <button 
+                  type="button" 
+                  onClick={handleExportPDF} 
+                  className="w-full xs:w-auto py-1.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow-md cursor-pointer active:scale-[0.99]"
+                >
+                  <Download size={13} /> Export Clean PDF
+                </button>
               </div>
 
-              {/* LIVE EXPORTER PREVIEW CONTAINER BOX FRAME */}
+              {/* HORIZONTAL EMBED CANVAS SCROLLER */}
               <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-start items-start bg-slate-950/40 scrollbar-thin">
                 <div className="min-w-[816px] bg-slate-900 p-1 border border-slate-800 shadow-2xl rounded-md mx-auto">
                   <div 
                     ref={resumePrintRef}
-                    className="w-[8.5in] min-h-[11in] flex flex-col text-left overflow-hidden shadow-inner"
+                    className="w-[8.5in] min-h-[11in] flex flex-col text-left overflow-hidden bg-white shadow-inner"
                     style={{ 
-                      backgroundColor: '#ffffff',
                       padding: '54px 48px'
                     }}
                   >
-                    <div className="whitespace-pre-line max-w-full font-sans tracking-normal">
+                    <div className="whitespace-pre-line max-w-full tracking-normal">
                       {renderCleanResumeBody()}
                     </div>
                   </div>
