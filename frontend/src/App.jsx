@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
-import * as html2pdf from 'html2pdf.js'; // Robust CommonJS bundle matching rules for Vite
-import { ToastContainer, toast } from 'react-toastify'; // Premium Toast Engine Injection
-import 'react-toastify/dist/ReactToastify.css'; // Essential base stylesheet for smooth slide animations
+import * as html2pdf from 'html2pdf.js'; 
+import { ToastContainer, toast } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css'; 
 import { 
   UploadCloud, 
   FileText, 
@@ -30,7 +30,8 @@ import {
   Menu,
   X,
   MoreVertical,
-  Trash2
+  Trash2,
+  Layout
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -63,6 +64,9 @@ function App() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
+
+  // Active Template State Id (modern, minimalist, elegant)
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
 
   const getAuthConfig = useCallback(() => {
     return { headers: { Authorization: `Bearer ${token}` } };
@@ -246,63 +250,84 @@ function App() {
     toast.info('Compiling print engines for document distribution...');
 
     const opt = {
-      margin:       [0.5, 0.5, 0.5, 0.5],
+      margin:       [0.4, 0.4, 0.4, 0.4],
       filename:     `Optimized_Resume_${username || 'User'}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
+      image:        { type: 'jpeg', quality: 1.0 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
 
     const pdfEngine = html2pdf.default || html2pdf;
     pdfEngine().set(opt).from(element).save();
-    toast.success('Official PDF exported successfully!');
+    toast.success('Official ATS-optimized PDF exported successfully!');
   };
 
-  const renderOptimizedResumeBody = () => {
-    if (!results || !results.resumeRawText) {
-      return <p style={{ color: '#94a3b8', fontStyle: 'italic', textAlign: 'center' }}>Raw layout text unavailable. Please complete a fresh scan.</p>;
-    }
+  // HELPER FUNCTION: Generates clean, high-grade typography styles without highlighting markers
+  const renderCleanResumeBody = () => {
+    if (!results || !results.resumeRawText) return null;
 
     let dynamicBodyText = results.resumeRawText;
 
+    // Apply corrections inline completely silently
     results.actionableImprovements?.forEach((item) => {
       if (item.currentText && item.suggestedText) {
         const cleanCurrent = item.currentText.trim();
         if (dynamicBodyText.includes(cleanCurrent)) {
-          dynamicBodyText = dynamicBodyText.split(cleanCurrent).join(
-            `__OPTIMIZED_START__${item.suggestedText}__OPTIMIZED_END__`
-          );
+          dynamicBodyText = dynamicBodyText.split(cleanCurrent).join(item.suggestedText);
         }
       }
     });
 
-    return dynamicBodyText.split('\n').map((line, idx) => {
-      if (!line.trim()) return <div key={idx} className="h-2" />;
+    // Style Configuration Mapping matrices based on the template selection context
+    const templateStyles = {
+      modern: {
+        heading: { color: '#1e3a8a', fontSize: '18px', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginTop: '16px', textTransform: 'uppercase', tracking: '0.05em' },
+        subHeading: { color: '#334155', fontSize: '12px', fontWeight: 'bold', marginTop: '6px' },
+        bodyText: { color: '#1e293b', fontSize: '11px', lineHeight: '1.6', marginTop: '2px', textAlign: 'justify' }
+      },
+      minimalist: {
+        heading: { color: '#000000', fontSize: '15px', fontWeight: 'bold', borderBottom: '1.5px solid #000000', paddingBottom: '2px', marginTop: '14px', textTransform: 'uppercase', tracking: '0.1em' },
+        subHeading: { color: '#000000', fontSize: '11.5px', fontWeight: 'bold', marginTop: '4px' },
+        bodyText: { color: '#27272a', fontSize: '10.5px', lineHeight: '1.5', marginTop: '2px', textAlign: 'justify' }
+      },
+      elegant: {
+        heading: { color: '#4c1d95', fontSize: '17px', fontFamily: 'Georgia, serif', fontStyle: 'italic', borderBottom: '1px dashed #c084fc', paddingBottom: '3px', marginTop: '16px' },
+        subHeading: { color: '#581c87', fontSize: '12px', fontWeight: 'bold', marginTop: '5px' },
+        bodyText: { color: '#3b0764', fontSize: '11px', lineHeight: '1.6', marginTop: '3px', textAlign: 'justify' }
+      }
+    };
 
-      if (line.includes('__OPTIMIZED_START__')) {
-        const cleanLine = line
-          .replace(/__OPTIMIZED_START__/g, '')
-          .replace(/__OPTIMIZED_END__/g, '');
+    const currentStyle = templateStyles[selectedTemplate] || templateStyles.modern;
+
+    return dynamicBodyText.split('\n').map((line, idx) => {
+      const trimmed = line.trim();
+      if (!trimmed) return <div key={idx} className="h-2" />;
+
+      // Structural Line Detector (Identifies Section Dividers like Experience, Education, Skills)
+      const isHeader = trimmed.length < 35 && /^(objective|summary|experience|employment|work history|education|skills|technical skills|projects|languages|certifications|awards|interests)/i.test(trimmed);
+      const isSubHeader = trimmed.length < 80 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed)));
+
+      if (isHeader) {
         return (
-          <p 
-            key={idx} 
-            style={{ 
-              color: '#065f46', 
-              backgroundColor: '#ecfdf5', 
-              fontWeight: '500', 
-              borderLeft: '2px solid #10b981', 
-              paddingLeft: '8px', 
-              margin: '4px 0', 
-              borderRadius: '4px',
-              userSelect: 'none'
-            }}
-          >
-            {cleanLine}
-          </p>
+          <h3 key={idx} style={currentStyle.heading}>
+            {trimmed}
+          </h3>
         );
       }
 
-      return <p key={idx} style={{ color: '#1e293b', margin: '2px 0', textAlign: 'justify' }}>{line}</p>;
+      if (isSubHeader) {
+        return (
+          <h4 key={idx} style={currentStyle.subHeading}>
+            {trimmed}
+          </h4>
+        );
+      }
+
+      return (
+        <p key={idx} style={currentStyle.bodyText}>
+          {trimmed.startsWith('•') || trimmed.startsWith('-') ? trimmed : `• ${trimmed}`}
+        </p>
+      );
     });
   };
 
@@ -310,66 +335,32 @@ function App() {
     <div className="h-screen w-screen bg-slate-950 text-slate-100 font-sans flex flex-col overflow-hidden relative">
       
       {/* GLOBAL TOAST CONTAINER COMPONENT */}
-      <ToastContainer 
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
 
       {/* CUSTOM DATA DELETION AUTH MODAL OVERLAY */}
       {deleteModalOpen && targetDeleteLog && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-5 relative overflow-hidden mx-auto">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-rose-500 to-transparent" />
-            
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl shadow-lg shrink-0">
-                <AlertTriangle size={22} />
-              </div>
+              <div className="p-3 bg-rose-500/10 text-rose-400 rounded-xl shadow-lg shrink-0"><AlertTriangle size={22} /></div>
               <div className="space-y-1">
                 <h3 className="text-base font-bold text-white tracking-tight">Confirm Vault Purge Sequence</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">This action cannot be undone. You are completely clearing this analytical ledger record from Cloud Atlas storage.</p>
               </div>
             </div>
-
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 font-mono text-center select-all">
+            <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 font-mono text-center select-all">
               <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold block mb-1">Target Identity String</span>
               <p className="text-xs text-rose-400 font-bold break-all">{targetDeleteLog.fileName}</p>
             </div>
-
             <form onSubmit={handleSecureDeleteScan} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Re-type File Name to Authorize</label>
-                <input 
-                  type="text" 
-                  required
-                  value={deleteConfirmationInput}
-                  onChange={(e) => setDeleteConfirmationInput(e.target.value)}
-                  placeholder="Paste or type exact target filename..." 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-rose-500/50 transition"
-                />
+                <input type="text" required value={deleteConfirmationInput} onChange={(e) => setDeleteConfirmationInput(e.target.value)} placeholder="Paste or type exact target filename..." className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-300 font-mono focus:outline-none focus:border-rose-500/50 transition" />
               </div>
-
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <button 
-                  type="button" 
-                  onClick={() => { setDeleteModalOpen(false); setTargetDeleteLog(null); }}
-                  className="py-2.5 border border-slate-800 hover:border-slate-700 bg-slate-950/40 text-slate-400 hover:text-slate-200 font-semibold text-xs rounded-xl transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={deleteConfirmationInput !== targetDeleteLog.fileName}
-                  className="py-2.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-rose-950/20 flex justify-center items-center gap-1.5 cursor-pointer"
-                >
+                <button type="button" onClick={() => { setDeleteModalOpen(false); setTargetDeleteLog(null); }} className="py-2.5 border border-slate-800 hover:border-slate-700 bg-slate-400/5 text-slate-300 font-semibold text-xs rounded-xl transition cursor-pointer">Cancel</button>
+                <button type="submit" disabled={deleteConfirmationInput !== targetDeleteLog.fileName} className="py-2.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-lg flex justify-center items-center gap-1.5 cursor-pointer">
                   <Trash2 size={13} /> Confirm Delete
                 </button>
               </div>
@@ -384,9 +375,7 @@ function App() {
           <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl max-w-md w-full shadow-2xl space-y-6 relative overflow-hidden mx-auto">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
             <div className="text-center space-y-1">
-              <div className="mx-auto w-10 h-10 bg-gradient-to-tr from-indigo-600 to-violet-500 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center mb-2">
-                <Sparkles size={20} />
-              </div>
+              <div className="mx-auto w-10 h-10 bg-gradient-to-tr from-indigo-600 to-violet-500 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center mb-2"><Sparkles size={20} /></div>
               <h2 className="text-xl font-bold tracking-tight text-white">Welcome to ResuAI</h2>
               <p className="text-xs text-slate-400">Unlock private optimization diagnostics tracking</p>
             </div>
@@ -434,18 +423,11 @@ function App() {
       <header className="border-b border-slate-800/60 bg-slate-900/40 backdrop-blur shrink-0 px-4 sm:px-6 py-4 flex justify-between items-center z-40">
         <div className="flex items-center gap-3">
           {token && (
-            <button 
-              type="button" 
-              onClick={() => setIsMobileVaultOpen(!isMobileVaultOpen)} 
-              className="lg:hidden p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-xl transition cursor-pointer"
-              title="Toggle Audit Vault"
-            >
+            <button type="button" onClick={() => setIsMobileVaultOpen(!isMobileVaultOpen)} className="lg:hidden p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-xl transition cursor-pointer">
               {isMobileVaultOpen ? <X size={16} /> : <Menu size={16} />}
             </button>
           )}
-          <div className="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20">
-            <Sparkles size={20} />
-          </div>
+          <div className="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20"><Sparkles size={20} /></div>
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center">
             ResuAI <span className="hidden sm:inline bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent text-xs font-semibold bg-indigo-500/10 px-2 py-0.5 rounded-md ml-2 border border-indigo-500/20">Optimizer Engine</span>
           </h1>
@@ -453,20 +435,16 @@ function App() {
         
         {token && (
           <div className="flex items-center gap-2 sm:gap-4 animate-fade-in">
-            <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner transition-all duration-300">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shadow-sm shrink-0">
-                {username.charAt(0)}
-              </div>
+            <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner">
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">{username.charAt(0)}</div>
               <div className="flex flex-col text-left max-w-[80px] sm:max-w-[120px]">
                 <span className="text-xs font-semibold text-slate-200 tracking-wide capitalize truncate">{username}</span>
                 <span className="text-[9px] font-medium text-emerald-400 flex items-center gap-1 font-mono leading-none mt-0.5">
-                  <span className="h-1 w-1 rounded-full bg-emerald-400 inline-block animate-pulse shrink-0" /> <span className="hidden xs:inline">Active</span> Workspace
+                  <span className="h-1 w-1 rounded-full bg-emerald-400 inline-block animate-pulse shrink-0" /> Active Workspace
                 </span>
               </div>
             </div>
-            <button type="button" onClick={handleLogout} className="p-2.5 bg-slate-900 hover:bg-rose-950/20 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-900/30 rounded-xl transition cursor-pointer">
-              <LogOut size={15} />
-            </button>
+            <button type="button" onClick={handleLogout} className="p-2.5 bg-slate-900 hover:bg-rose-950/20 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-900/30 rounded-xl transition cursor-pointer"><LogOut size={15} /></button>
           </div>
         )}
       </header>
@@ -475,78 +453,36 @@ function App() {
       <div className="flex-1 w-full p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden relative scrollbar-none">
         
         {/* PANEL 1: DESKTOP VAULT INDEX & MOBILE OVERLAY SLIDE-OUT */}
-        <aside className={`
-          fixed inset-y-0 left-0 z-30 w-[280px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col overflow-hidden transition-transform duration-300 transform mt-[73px] lg:mt-0
-          lg:static lg:w-[22%] lg:bg-slate-900/40 lg:border lg:border-slate-800/60 lg:rounded-2xl lg:transform-none
-          ${isMobileVaultOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 px-1">
-            <History size={14} className="text-indigo-400" /> Audit Vault
-          </h2>
+        <aside className={`fixed inset-y-0 left-0 z-30 w-[280px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col overflow-hidden transition-transform duration-300 transform mt-[73px] lg:mt-0 lg:static lg:w-[22%] lg:bg-slate-900/40 lg:border lg:border-slate-800/60 lg:rounded-2xl lg:transform-none ${isMobileVaultOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 px-1"><History size={14} className="text-indigo-400" /> Audit Vault</h2>
           <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-slate-800">
-            {historyLoading && (
-              <div className="text-center py-12 text-xs text-slate-500 animate-pulse">Loading vault logs...</div>
-            )}
-            {!historyLoading && historyList.length === 0 && (
-              <div className="text-center py-12 text-xs text-slate-500 font-mono">Vault entry buffer empty.</div>
-            )}
+            {historyLoading && <div className="text-center py-12 text-xs text-slate-500 animate-pulse">Loading vault logs...</div>}
+            {!historyLoading && historyList.length === 0 && <div className="text-center py-12 text-xs text-slate-500 font-mono">Vault entry buffer empty.</div>}
             {historyList.map((log) => (
-              <button 
-                key={log._id} 
-                onClick={() => loadPastScan(log._id)} 
-                className="w-full text-left bg-slate-900/40 hover:bg-indigo-950/20 border border-slate-800/60 hover:border-indigo-500/30 p-3.5 rounded-xl transition active:scale-[0.99] block cursor-pointer group relative"
-              >
+              <button key={log._id} onClick={() => loadPastScan(log._id)} className="w-full text-left bg-slate-900/40 hover:bg-indigo-950/20 border border-slate-800/60 hover:border-indigo-500/30 p-3.5 rounded-xl transition active:scale-[0.99] block cursor-pointer group relative">
                 <div className="flex justify-between items-start gap-3 mb-2 pr-6">
                   <p className="text-xs font-medium text-slate-300 truncate flex-1 group-hover:text-indigo-400 transition">{log.fileName}</p>
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${log.matchPercentage >= 80 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>{log.matchPercentage}%</span>
                 </div>
-                
                 <div className="absolute right-2.5 top-3.5 z-10">
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation(); 
-                      setActiveDropdownId(activeDropdownId === log._id ? null : log._id);
-                    }}
-                    className="p-1 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-md transition cursor-pointer"
-                  >
-                    <MoreVertical size={14} />
-                  </button>
-                  
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setActiveDropdownId(activeDropdownId === log._id ? null : log._id); }} className="p-1 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-md transition cursor-pointer"><MoreVertical size={14} /></button>
                   {activeDropdownId === log._id && (
                     <div className="absolute right-0 mt-1 w-28 bg-slate-900 border border-slate-800 rounded-lg shadow-xl py-1 z-20 animate-fade-in">
-                      <button
-                        type="button"
-                        onClick={(e) => triggerDeleteModal(e, log)}
-                        className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-rose-400 hover:bg-rose-950/30 flex items-center gap-1.5 transition cursor-pointer"
-                      >
-                        <Trash2 size={12} /> Delete Scan
-                      </button>
+                      <button type="button" onClick={(e) => triggerDeleteModal(e, log)} className="w-full text-left px-3 py-1.5 text-[11px] font-medium text-rose-400 hover:bg-rose-950/30 flex items-center gap-1.5 transition cursor-pointer"><Trash2 size={12} /> Delete Scan</button>
                     </div>
                   )}
                 </div>
-
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
-                  <Calendar size={10} />{formatTimestamp(log.createdAt)}
-                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono"><Calendar size={10} />{formatTimestamp(log.createdAt)}</div>
               </button>
             ))}
           </div>
         </aside>
 
-        {/* MOBILE BLUR BACKDROP FOR SLIDE-OUT SLIDER */}
-        {isMobileVaultOpen && (
-          <div 
-            onClick={() => setIsMobileVaultOpen(false)} 
-            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-20 lg:hidden mt-[73px]"
-          />
-        )}
+        {isMobileVaultOpen && <div onClick={() => setIsMobileVaultOpen(false)} className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-20 lg:hidden mt-[73px]" />}
 
         {/* PANEL 2: INPUT TARGETS */}
         <section className="w-full lg:w-[28%] bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 sm:p-5 flex flex-col overflow-visible lg:overflow-hidden shadow-xl shrink-0">
-          <h2 className="text-xs font-bold uppercase tracking-wider mb-4 text-slate-300 flex items-center gap-2">
-            <Layers size={14} className="text-indigo-400" /> Target Parameters
-          </h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider mb-4 text-slate-300 flex items-center gap-2"><Layers size={14} className="text-indigo-400" /> Target Parameters</h2>
           <form onSubmit={handleAnalyze} className="flex-1 flex flex-col justify-between overflow-visible lg:overflow-hidden space-y-4">
             <div className="flex-1 flex flex-col space-y-4 overflow-visible lg:overflow-y-auto pr-1 scrollbar-thin">
               <div>
@@ -566,7 +502,7 @@ function App() {
               </div>
               <div className="flex-1 flex flex-col min-h-[140px] lg:min-h-[180px]">
                 <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Benchmark (JD)</label>
-                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste job profile parameters or technical requirements..." className="w-full flex-1 bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-none leading-relaxed min-h-[120px] lg:min-h-0" />
+                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Paste job profile requirements..." className="w-full flex-1 bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 resize-none leading-relaxed min-h-[120px] lg:min-h-0" />
               </div>
             </div>
             <button type="submit" disabled={loading || !file || !jobDescription.trim()} className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg flex justify-center items-center gap-2 cursor-pointer shrink-0 active:scale-[0.99] mt-2">
@@ -580,11 +516,11 @@ function App() {
           <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-5 py-3 flex justify-between items-center shrink-0 gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
               <button type="button" onClick={() => setActiveTab('chat')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'chat' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-                <MessageSquare size={13} /> <span className="hidden xxs:inline">Stream</span><span className="xxs:hidden">AI</span>
+                <MessageSquare size={13} /> Optimization dashboard
               </button>
               {results && (
                 <button type="button" onClick={() => setActiveTab('preview')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'preview' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-                  <Eye size={13} /> <span className="hidden xxs:inline">Exporter</span><span className="xxs:hidden">PDF</span>
+                  <Layout size={13} /> ATS Resume Canvas
                 </button>
               )}
             </div>
@@ -595,7 +531,7 @@ function App() {
             )}
           </div>
 
-          {/* TAB 1: OPTIMIZATION STREAM */}
+          {/* TAB 1: OPTIMIZATION STREAM (User Reviews Mistakes and Corrections) */}
           {activeTab === 'chat' && (
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-950/20 scrollbar-thin">
               {loading && (
@@ -663,33 +599,36 @@ function App() {
             </div>
           )}
 
-          {/* TAB 2: DOCUMENT EXPORTER CANVASES */}
+          {/* TAB 2: DOCUMENT EXPORTER CANVASES (Fully Styled Clean Templates Without Highlight Indicators) */}
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
-              <div className="p-3 bg-slate-950/40 border-b border-slate-800 flex flex-col xs:flex-row justify-between items-start xs:items-center shrink-0 gap-2">
-                <span className="text-[11px] text-slate-400 font-mono">Original Document Structure (Optimized Live)</span>
-                <button 
-                  type="button" 
-                  onClick={handleExportPDF} 
-                  className="w-full xs:w-auto py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow-md cursor-pointer"
-                >
-                  <Download size={13} /> Export Official PDF
-                </button>
+              
+              {/* STYLE DESIGN IDEAS TEMPLATE CONFIGURATOR SELECTOR BAR */}
+              <div className="p-3 bg-slate-950/60 border-b border-slate-800 flex flex-col xs:flex-row justify-between items-start xs:items-center shrink-0 gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400 font-mono mr-1">ATS Idea Styles:</span>
+                  <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+                    <button type="button" onClick={() => setSelectedTemplate('modern')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'modern' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Modern Tech</button>
+                    <button type="button" onClick={() => setSelectedTemplate('minimalist')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'minimalist' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Executive</button>
+                    <button type="button" onClick={() => setSelectedTemplate('elegant')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'elegant' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Creative</button>
+                  </div>
+                </div>
+                <button type="button" onClick={handleExportPDF} className="w-full xs:w-auto py-1.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow-md cursor-pointer active:scale-[0.99]"><Download size={13} /> Download Clean Resume</button>
               </div>
 
+              {/* LIVE EXPORTER PREVIEW CONTAINER BOX FRAME */}
               <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-start items-start bg-slate-950/40 scrollbar-thin">
-                <div className="min-w-[816px] bg-slate-900 p-1 border border-slate-800 shadow-xl rounded-md mx-auto">
+                <div className="min-w-[816px] bg-slate-900 p-1 border border-slate-800 shadow-2xl rounded-md mx-auto">
                   <div 
                     ref={resumePrintRef}
-                    className="w-[8.5in] min-h-[11in] flex flex-col text-left text-xs leading-relaxed overflow-hidden shadow-inner"
+                    className="w-[8.5in] min-h-[11in] flex flex-col text-left overflow-hidden shadow-inner"
                     style={{ 
-                      fontFamily: 'Arial, Helvetica, sans-serif',
                       backgroundColor: '#ffffff',
-                      padding: '48px'
+                      padding: '54px 48px'
                     }}
                   >
-                    <div className="whitespace-pre-line max-w-full font-sans tracking-normal text-[11px]" style={{ color: '#1e293b' }}>
-                      {renderOptimizedResumeBody()}
+                    <div className="whitespace-pre-line max-w-full font-sans tracking-normal">
+                      {renderCleanResumeBody()}
                     </div>
                   </div>
                 </div>
