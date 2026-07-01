@@ -63,7 +63,7 @@ function App() {
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
-  // Active Template Layout ID ('tech', 'corporate', 'minimal')
+  // Active Template Idea Layout ID ('tech', 'corporate', 'minimal')
   const [selectedTemplate, setSelectedTemplate] = useState('tech');
 
   const getAuthConfig = useCallback(() => {
@@ -123,7 +123,6 @@ function App() {
       setUsername(receivedName);
       setAuthForm({ username: '', email: '', password: '' });
       setShowPassword(false);
-      toast.success(`Welcome back, ${receivedName}! Authenticated successfully.`);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Authentication failed';
       setAuthError(errorMsg);
@@ -245,20 +244,21 @@ function App() {
     const element = resumePrintRef.current;
     if (!element) return;
     
-    toast.info('Compiling print engine layout configurations...');
+    toast.info('Compiling A4 sheet layout configurations...');
 
+    // IRONCLAD FIXED A4 SPECIFICATIONS
     const opt = {
-      margin:       [0.5, 0.5, 0.5, 0.5],
+      margin:       [0, 0, 0, 0], // Margins handled explicitly via CSS padding parameters
       filename:     `ATS_Optimized_Resume.pdf`,
       image:        { type: 'jpeg', quality: 1.0 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } 
     };
 
     const pdfEngine = html2pdf.default || html2pdf;
     pdfEngine().set(opt).from(element).save();
-    toast.success('ATS-Optimized clean PDF generated!');
+    toast.success('ATS-Optimized A4 PDF generated!');
   };
 
   const renderOptimizedResumeBody = () => {
@@ -297,13 +297,13 @@ function App() {
     });
   };
 
-  // NEW DYNAMIC PARSER: Intelligently parses raw lines contextually and handles multi-page documents perfectly
+  // DYNAMIC ATS COMPLIANT ENGINE: Parses data blocks contextually from your text stream flawlessly
   const renderCleanResumeBody = () => {
     if (!results || !results.resumeRawText) return null;
 
     let dynamicBodyText = results.resumeRawText;
 
-    // Apply optimizations inline completely silently
+    // Apply Gemini optimization suggestions silently inline into the document matrix
     results.actionableImprovements?.forEach((item) => {
       if (item.currentText && item.suggestedText) {
         const cleanCurrent = item.currentText.trim();
@@ -313,103 +313,110 @@ function App() {
       }
     });
 
-    // Style blueprints for layout standard ideas
-    const themeBlueprints = {
+    // Style blueprints matching specific clean layout requirements
+    const themes = {
       tech: {
-        container: { fontFamily: 'Arial, Helvetica, sans-serif', color: '#1e293b', width: '100%' },
-        name: { color: '#1e40af', fontSize: '22px', fontWeight: '800', textAlign: 'left', textTransform: 'uppercase', margin: '0 0 2px 0' },
-        meta: { color: '#475569', fontSize: '10.5px', fontWeight: '500', textAlign: 'left', marginBottom: '16px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
-        heading: { color: '#1d4ed8', fontSize: '12.5px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
+        container: { fontFamily: 'Arial, sans-serif', color: '#1e293b', width: '100%', lineHeight: '1.4' },
+        name: { color: '#1e40af', fontSize: '20px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
+        meta: { color: '#475569', fontSize: '10px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #3b82f6', paddingBottom: '6px' },
+        heading: { color: '#1d4ed8', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
         subHeading: { color: '#0f172a', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#334155', fontSize: '10.5px', lineHeight: '1.5', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
-        plainText: { color: '#334155', fontSize: '10.5px', lineHeight: '1.5', margin: '2px 0', textAlign: 'justify' }
+        bulletText: { color: '#334155', fontSize: '10px', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
+        plainText: { color: '#334155', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
       corporate: {
-        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%' },
-        name: { color: '#000000', fontSize: '20px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
-        meta: { color: '#111111', fontSize: '10.5px', fontWeight: '400', textAlign: 'center', marginBottom: '18px', borderBottom: '1px solid #000000', paddingBottom: '6px' },
-        heading: { color: '#000000', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
-        subHeading: { color: '#000000', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#000000', fontSize: '10.5px', lineHeight: '1.4', margin: '1px 0 1px 16px', textIndent: '-16px', textAlign: 'justify' },
-        plainText: { color: '#000000', fontSize: '10.5px', lineHeight: '1.5', margin: '2px 0', textAlign: 'justify' }
+        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%', lineHeight: '1.4' },
+        name: { color: '#000000', fontSize: '19px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
+        meta: { color: '#111111', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
+        heading: { color: '#000000', fontSize: '11.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
+        subHeading: { color: '#000000', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
+        bulletText: { color: '#000000', fontSize: '10px', margin: '1px 0 1px 16px', textIndent: '-16px', textAlign: 'justify' },
+        plainText: { color: '#000000', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
       minimal: {
-        container: { fontFamily: 'Segoe UI, Arial, sans-serif', color: '#1c1917', width: '100%' },
-        name: { color: '#1c1917', fontSize: '22px', fontWeight: '700', textAlign: 'left', margin: '0' },
-        meta: { color: '#44403c', fontSize: '10.5px', fontWeight: '400', textAlign: 'left', marginBottom: '16px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
-        heading: { color: '#44403c', fontSize: '12px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase' },
-        subHeading: { color: '#1c1917', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#292524', fontSize: '10.5px', lineHeight: '1.4', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
-        plainText: { color: '#292524', fontSize: '10.5px', lineHeight: '1.4', margin: '2px 0', textAlign: 'justify' }
+        container: { fontFamily: 'Segoe UI, Helvetica, Arial, sans-serif', color: '#1c1917', width: '100%', lineHeight: '1.4' },
+        name: { color: '#1c1917', fontSize: '20px', fontWeight: '700', textAlign: 'left', margin: '0' },
+        meta: { color: '#44403c', fontSize: '10px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
+        heading: { color: '#44403c', fontSize: '11.5px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
+        subHeading: { color: '#1c1917', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
+        bulletText: { color: '#292524', fontSize: '10px', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
+        plainText: { color: '#292524', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       }
     };
 
-    const style = configs[selectedTemplate] || configs.tech;
-    const lines = dynamicBodyText.split('\n');
+    const style = themes[selectedTemplate] || themes.tech;
+    const rawLines = dynamicBodyText.split('\n');
     let hasRenderedName = false;
 
     return (
-      <div style={{ width: '100%' }}>
-        {lines.map((line, idx) => {
+      <div style={style.container}>
+        {rawLines.map((line, idx) => {
           let trimmed = line.trim();
-          if (!trimmed) return <div key={idx} className="h-1" />;
+          if (!trimmed) return null;
 
-          // Wipe out rogue bullet fragments left over by parser splits
-          if (trimmed === '•' || trimmed === '-' || trimmed === '*') return null;
+          // Strip standalone structural artifacts
+          if (trimmed === '•' || trimmed === '-' || trimmed === '*' || trimmed === '⚫') return null;
 
-          // Strip pre-existing bullet characters to prevent double rendering
-          let isBulletLine = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*');
-          if (isOriginalBullet) {
+          // Strip pre-existing bullet symbols to prevent double rendering
+          let isBulletRow = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('⚫');
+          if (isBulletRow) {
             trimmed = trimmed.substring(1).trim();
           }
 
-          // Rule 1: First continuous text item maps as Main Candidate Name Header
-          if (!hasRenderedHeader && trimmed.length < 45 && !trimmed.includes('|') && !trimmed.includes('@')) {
-            hasRenderedHeader = true;
+          // Rule 1: The very first solid row represents the Full Name Header
+          if (!hasRenderedName && trimmed.length < 40 && !trimmed.includes('|') && !trimmed.includes('@')) {
+            hasRenderedName = true;
             
-            let secondaryMetaRow = '';
-            if (lines[idx + 1] && (lines[idx + 1].includes('|') || lines[idx + 1].includes('@') || lines[idx + 1].includes('Developer') || lines[idx + 1].includes('Fresher'))) {
-              secondaryMetaBlock = lines[idx + 1].trim();
-              lines[idx + 1] = ''; // Absorb cleanly
+            // Check look-ahead lines for secondary title or metadata info metrics rows
+            let candidateMetaBlock = '';
+            for (let j = 1; j <= 3; j++) {
+              if (rawLines[idx + j] && (rawLines[idx + j].includes('|') || rawLines[idx + j].includes('@') || rawLines[idx + j].includes('Developer'))) {
+                candidateMetaBlock = rawLines[idx + j].trim();
+                rawLines[idx + j] = ''; // Absorb cleanly to prevent duplicating text downstream
+                break;
+              }
             }
 
             return (
-              <div key={idx} className="w-full" style={{ pageBreakInside: 'avoid' }}>
+              <div key={idx} className="w-full text-center" style={{ pageBreakInside: 'avoid' }}>
                 <h1 style={style.name}>{trimmed}</h1>
-                {metaBlock && <p style={style.meta}>{metaBlock}</p>}
+                {candidateMetaBlock && <p style={style.meta}>{candidateMetaBlock}</p>}
               </div>
             );
           }
 
-          // Rule 2: Identify structural sections dynamically
-          const isSectionTitle = trimmed.length < 35 && /^(objective|summary|experience|employment|work history|education|skills|technical skills|projects|languages|certifications|awards|interests)/i.test(trimmed);
+          // Rule 2: Identify structural uppercase section dividers
+          const isSectionHeader = trimmed.length < 30 && /^(objective|summary|experience|work experience|employment|education|skills|technical skills|projects|languages|certifications|soft skills)/i.test(trimmed);
           
-          // Rule 3: Identify roles, companies, and date boundaries cleanly
-          const isMetadataLine = trimmed.length < 95 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed) || /oct|nov|jun|jul|aug|sept|jan|feb|mar|apr|may/i.test(trimmed)));
+          // Rule 3: Identify dates, roles, and company element chains
+          const isRoleMetadata = trimmed.length < 95 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed) || /oct|nov|jun|jul|aug|sept|jan|feb|mar|apr|may/i.test(trimmed)));
 
-          if (isSectionTitle) {
+          if (isSectionHeader) {
             return <h2 key={idx} style={style.heading}>{trimmed}</h2>;
           }
 
-          if (isMetadataLine) {
-            if (trimmed.includes('|') && (selectedTemplate === 'tech' || selectedTemplate === 'corporate')) {
-              const elements = trimmed.split('|');
-              const rightElement = elements.pop().trim();
-              const leftElement = elements.join('|').trim();
+          if (isRoleMetadata) {
+            // Split metadata line across both container sides on tech or corporate templates
+            if (trimmed.includes('|') || trimmed.includes('–')) {
+              const dividerToken = trimmed.includes('|') ? '|' : '–';
+              const components = trimmed.split(dividerToken);
+              const rightComponent = components.pop().trim();
+              const leftComponent = components.join(dividerToken).trim();
+              
               return (
-                <div key={idx} style={style.subHeading} className="flex justify-between items-center w-full font-bold select-none">
-                  <span>{leftElement}</span>
-                  <span className="font-normal font-mono text-[10px] text-slate-600">{rightElement}</span>
+                <div key={idx} style={style.subHeading} className="flex justify-between items-center w-full font-bold select-none style-subheader">
+                  <span>{leftComponent}</span>
+                  <span className="font-normal font-mono text-[9.5px] text-slate-600">{rightComponent}</span>
                 </div>
               );
             }
             return <h4 key={idx} style={style.subHeading}>{trimmed}</h4>;
           }
 
-          // Rule 4: Apply Bullet layouts exclusively to details lines (Experience logs, skills blocks, projects items)
-          const isSummaryText = trimmed.length > 120 && (trimmed.toLowerCase().includes('seeking') || trimmed.toLowerCase().includes('enthusiastic') || trimmed.toLowerCase().includes('professional with'));
+          // Rule 4: Apply Bullet points ONLY to list elements, keeping summaries flat
+          const isSummaryBlock = trimmed.length > 110 && (trimmed.toLowerCase().includes('seeking') || trimmed.toLowerCase().includes('enthusiastic') || trimmed.toLowerCase().includes('professional with'));
 
-          if (isBulletLine || (!isSummaryParagraph && trimmed.length > 20 && !isSectionTitle && !isMetadataLine)) {
+          if (isBulletRow || (!isSummaryBlock && trimmed.length > 18)) {
             return (
               <p key={idx} style={style.bulletText} className="page-break-avoid">
                 • {trimmed}
@@ -528,7 +535,7 @@ function App() {
         {token && (
           <div className="flex items-center gap-2 sm:gap-4 animate-fade-in">
             <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">{username.charAt(0)}</div>
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shadow-sm shrink-0">{username.charAt(0)}</div>
               <div className="flex flex-col text-left max-w-[80px] sm:max-w-[120px]">
                 <span className="text-xs font-semibold text-slate-200 tracking-wide capitalize truncate">{username}</span>
                 <span className="text-[9px] font-medium text-emerald-400 flex items-center gap-1 font-mono leading-none mt-0.5">
@@ -691,7 +698,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 2: ATS RESUME CANVAS */}
+          {/* TAB 2: DOCUMENT EXPORTER CANVASES */}
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
               
@@ -714,14 +721,14 @@ function App() {
                 </button>
               </div>
 
-              {/* HORIZONTAL EMBED CANVAS SCROLLER */}
+              {/* HORIZONTAL EMBED CANVAS SCROLLER WITH FIXED padding ON A4 PREVIEW WINDOW */}
               <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-start items-start bg-slate-950/40 scrollbar-thin">
                 <div className="min-w-[816px] bg-slate-900 p-1 border border-slate-800 shadow-2xl rounded-md mx-auto">
                   <div 
                     ref={resumePrintRef}
-                    className="w-[8.5in] min-h-[11in] flex flex-col text-left overflow-hidden bg-white shadow-inner"
+                    className="w-[210mm] min-h-[297mm] flex flex-col text-left overflow-hidden bg-white shadow-inner"
                     style={{ 
-                      padding: '54px 48px'
+                      padding: '20mm 15mm' // Standard A4 Document padding bounds mapping
                     }}
                   >
                     <div className="whitespace-pre-line max-w-full tracking-normal">
