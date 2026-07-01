@@ -63,8 +63,8 @@ function App() {
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
-  // 5 Distinct Template Style Options Tracker ('classicTech', 'executive', 'minimal', 'modernMinimal', 'editorial')
-  const [selectedTemplate, setSelectedTemplate] = useState('classicTech');
+  // 5 Distinct Template Style Options Tracker ('tech', 'corporate', 'minimal', 'slate', 'editorial')
+  const [selectedTemplate, setSelectedTemplate] = useState('tech');
 
   const getAuthConfig = useCallback(() => {
     return { headers: { Authorization: `Bearer ${token}` } };
@@ -244,20 +244,21 @@ function App() {
     const element = resumePrintRef.current;
     if (!element) return;
     
-    toast.info('Compiling A4 hardware print parameters...');
+    toast.info('Compiling A4 print layout configurations...');
 
+    // FIXED OPTIMIZED CONFIGS: Prevents the browser from freezing
     const opt = {
-      margin:       [10, 15, 10, 15], 
+      margin:       [12, 15, 12, 15], // Constant document spacing values
       filename:     `ATS_Optimized_Resume.pdf`,
-      image:        { type: 'jpeg', quality: 1.0 },
+      image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }, 
-      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } 
+      pagebreak:    { mode: ['css', 'legacy'] } // FIX: Removed heavy calculations to stop page-freeze loop
     };
 
     const pdfEngine = html2pdf.default || html2pdf;
     pdfEngine().set(opt).from(element).save();
-    toast.success('ATS-Optimized PDF Exported successfully!');
+    toast.success('PDF generated successfully!');
   };
 
   const renderOptimizedResumeBody = () => {
@@ -296,44 +297,58 @@ function App() {
     });
   };
 
-  // CLEAN ATS MAPPING ENGINE: Fully structured dynamic layout styles with 5 selectable templates
+  // TRUE LIVE PARSER ENGINE: Loops contextually and updates completely dynamically according to the uploaded content
   const renderCleanResumeBody = () => {
-    const designs = {
-      classicTech: {
-        container: { fontFamily: 'Arial, sans-serif', color: '#1e293b', width: '100%', lineHeight: '1.4' },
+    if (!results || !results.resumeRawText) return null;
+
+    let dynamicBodyText = results.resumeRawText;
+
+    // Apply corrections dynamically inline completely silently
+    results.actionableImprovements?.forEach((item) => {
+      if (item.currentText && item.suggestedText) {
+        const cleanCurrent = item.currentText.trim();
+        if (dynamicBodyText.includes(cleanCurrent)) {
+          dynamicBodyText = dynamicBodyText.split(cleanCurrent).join(item.suggestedText);
+        }
+      }
+    });
+
+    const themes = {
+      tech: {
+        container: { fontFamily: 'Arial, sans-serif', color: '#1e293b', width: '100%', lineHeight: '1.5' },
         name: { color: '#1e40af', fontSize: '22px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
-        meta: { color: '#475569', fontSize: '10px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
-        heading: { color: '#1d4ed8', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
+        meta: { color: '#475569', fontSize: '10.5px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
+        heading: { color: '#1d4ed8', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
         subHeading: { color: '#0f172a', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
         bulletText: { color: '#334155', fontSize: '10px', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
         plainText: { color: '#334155', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
-      executive: {
+      corporate: {
         container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%', lineHeight: '1.4' },
         name: { color: '#000000', fontSize: '20px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
-        meta: { color: '#111111', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
-        heading: { color: '#000000', fontSize: '11.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
+        meta: { color: '#111111', fontSize: '10.5px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
+        heading: { color: '#000000', fontSize: '12.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
         subHeading: { color: '#000000', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
         bulletText: { color: '#000000', fontSize: '10px', margin: '1px 0 1px 16px', textIndent: '-16px', textAlign: 'justify' },
         plainText: { color: '#000000', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
       minimal: {
         container: { fontFamily: 'Segoe UI, Arial, sans-serif', color: '#1c1917', width: '100%', lineHeight: '1.4' },
-        name: { color: '#1c1917', fontSize: '22px', fontWeight: '700', textAlign: 'left', margin: '0' },
-        meta: { color: '#44403c', fontSize: '10px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
-        heading: { color: '#44403c', fontSize: '11.5px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
+        name: { color: '#1c1917', fontSize: '20px', fontWeight: '700', textAlign: 'left', margin: '0' },
+        meta: { color: '#44403c', fontSize: '10.5px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
+        heading: { color: '#44403c', fontSize: '12px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
         subHeading: { color: '#1c1917', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
         bulletText: { color: '#292524', fontSize: '10px', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
         plainText: { color: '#292524', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
-      modernMinimal: {
-        container: { fontFamily: 'Verdana, Geneva, sans-serif', color: '#334155', width: '100%', lineHeight: '1.4' },
-        name: { color: '#0f172a', fontSize: '21px', fontWeight: '700', textAlign: 'left', margin: '0 0 2px 0', letterSpacing: '-0.03em' },
-        meta: { color: '#64748b', fontSize: '9.5px', fontWeight: '400', textAlign: 'left', marginBottom: '16px', paddingBottom: '4px', borderBottom: '1px solid #f1f5f9' },
-        heading: { color: '#475569', fontSize: '11px', fontWeight: '700', borderBottom: '2px solid #cbd5e1', paddingBottom: '2px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase' },
-        subHeading: { color: '#0f172a', fontSize: '10px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#334155', fontSize: '9.5px', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
-        plainText: { color: '#334155', fontSize: '9.5px', margin: '2px 0', textAlign: 'justify' }
+      slate: {
+        container: { fontFamily: 'Verdana, sans-serif', color: '#334155', width: '100%', lineHeight: '1.4' },
+        name: { color: '#0f172a', fontSize: '19px', fontWeight: '700', textAlign: 'left', margin: '0 0 2px 0' },
+        meta: { color: '#64748b', fontSize: '9.5px', fontWeight: '400', textAlign: 'left', marginBottom: '12px', paddingBottom: '4px' },
+        heading: { color: '#475569', fontSize: '11px', fontWeight: '700', backgroundColor: '#f1f5f9', padding: '3px 6px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase' },
+        subHeading: { color: '#0f172a', fontSize: '10px', fontWeight: '700', marginTop: '3px', marginBottom: '1px' },
+        bulletText: { color: '#334155', fontSize: '9.5px', margin: '1px 0 1px 12px', textIndent: '-12px', textAlign: 'justify' },
+        plainText: { color: '#334155', fontSize: '9.5px', margin: '1px 0', textAlign: 'justify' }
       },
       editorial: {
         container: { fontFamily: 'Georgia, serif', color: '#1c1917', width: '100%', lineHeight: '1.5' },
@@ -346,154 +361,84 @@ function App() {
       }
     };
 
-    const style = designs[selectedTemplate] || designs.classicTech;
-
-    // High fidelity data structure synchronised accurately with your raw credentials
-    const resumeData = {
-      name: "SHIVAM KUMAR",
-      title: "Fresher | Frontend Developer | Web Developer",
-      contact: "shivamk2729u@gmail.com | +91 9928173068 | Buxar, Bihar | linkedin.com/in/shivamk2729u",
-      summary: "Enthusiastic and detail-oriented junior tech professional with a passion for problem-solving and continuous learning. Seeking an entry-level role where I can contribute to innovative projects and grow as a developer/technologist in a collaborative team environment.",
-      skills: [
-        { label: "Frontend", values: "HTML5, CSS3, JavaScript, React.js, Bootstrap, Tailwind CSS" },
-        { label: "APIs / Database", values: "REST APIs, MongoDB, PHP (Basic)" },
-        { label: "Tools", values: "Git, GitHub, VS Code, Postman, Vercel" }
-      ],
-      experience: [
-        {
-          role: "Full Stack Web Development Intern",
-          company: "National Institute of Electronics & Information Technology (NIELIT)",
-          location: "Patna, India",
-          dates: "Oct 2024 - Nov 2024",
-          points: [
-            "Engineered a fully responsive, pixel-perfect website from concept to deployment using HTML, CSS, and JavaScript, ensuring a consistent user experience across diverse devices.",
-            "Optimized user interface designs for various screen sizes, achieving consistent visual appeal and intuitive navigation across web and mobile platforms.",
-            "Acquired foundational understanding of backend integration using PHP, facilitating seamless data communication between frontend components and database systems.",
-            "Adhered to modern web development best practices, delivering clean, modular, and maintainable code for enhanced project stability and collaboration."
-          ]
-        },
-        {
-          role: "Artificial Intelligence and Machine Learning Intern",
-          company: "TechGlaz Labs",
-          location: "Bhagalpur, India",
-          dates: "Jun 2025 - Jul 2025",
-          points: [
-            "Developed a practical understanding of core AI/ML workflows and data preprocessing templates.",
-            "Trained and evaluated foundational machine learning models utilizing Python.",
-            "Worked with sample datasets to understand how data is used in real-world AI projects.",
-            "Evaluated basic model performance to see how accurately they predicted outcomes."
-          ]
-        }
-      ],
-      projects: [
-        {
-          title: "Portfolio Website",
-          dates: "Apr 2026",
-          points: [
-            "Designed and developed a fully responsive personal portfolio website to showcase software projects, technical skills, and professional experience.",
-            "Designed a mobile-friendly UI to effectively showcase full-stack projects and technical skills."
-          ]
-        },
-        {
-          title: "Campus Connect | Full-Stack MERN Developer",
-          dates: "Aug 2025 - Mar 2026",
-          points: [
-            "Developed a comprehensive school management dashboard using MongoDB, Express.js, React, and Node.js to manage student performance, attendance, and fee tracking.",
-            "Engineered a secure, role-based access control system utilizing JWT (JSON Web Tokens) and bcrypt to authenticate Admins, Teachers, and Parents."
-          ]
-        }
-      ],
-      education: {
-        degree: "Diploma in Computer Science & Engg.",
-        institution: "Government Polytechnic Bhagalpur",
-        location: "Bhagalpur, Bihar",
-        dates: "Aug 2023 - Jun 2026",
-        score: "CGPA: 8.09"
-      },
-      softSkills: ["Quick Learner", "Time Management", "Problem-Solving", "Adaptability"],
-      languages: ["English (Professional)", "Hindi (Native)"]
-    };
-
-    if (results && Array.isArray(results.actionableImprovements)) {
-      results.actionableImprovements.forEach((imp) => {
-        if (!imp.currentText || !imp.suggestedText) return;
-        const suggestion = imp.suggestedText.trim();
-        resumeData.experience.forEach(exp => {
-          exp.points = exp.points.map(p => p.includes(imp.currentText.trim()) ? suggestion : p);
-        });
-        resumeData.projects.forEach(proj => {
-          proj.points = proj.points.map(p => p.includes(imp.currentText.trim()) ? suggestion : p);
-        });
-      });
-    }
+    const style = themes[selectedTemplate] || themes.tech;
+    const rawLines = dynamicBodyText.split('\n');
+    let hasRenderedName = false;
 
     return (
       <div style={{ width: '100%' }}>
-        <h1 style={style.name}>{resumeData.name}</h1>
-        <p style={{ ...style.plainText, fontWeight: '700', color: '#2563eb', textAlign: 'center', margin: '0' }}>{resumeData.title}</p>
-        <p style={style.meta}>{resumeData.contact}</p>
+        {rawLines.map((line, idx) => {
+          let trimmed = line.trim();
+          if (!trimmed) return null;
 
-        <h2 style={style.heading}>Summary</h2>
-        <p style={style.plainText}>{resumeData.summary}</p>
+          if (trimmed === '•' || trimmed === '-' || trimmed === '*' || trimmed === '⚫') return null;
 
-        <h2 style={style.heading}>Skills</h2>
-        {resumeData.skills.map((s, i) => (
-          <p key={i} style={style.plainText}><strong>{s.label}:</strong> {s.values}</p>
-        ))}
+          let isBulletRow = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('⚫');
+          if (isBulletRow) {
+            trimmed = trimmed.substring(1).trim();
+          }
 
-        <h2 style={style.heading}>Work Experience</h2>
-        {resumeData.experience.map((exp, i) => (
-          <div key={i} className="mb-2.5" style={{ pageBreakInside: 'avoid' }}>
-            <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '10.5px' }}>
-              <span>{exp.role}</span>
-              <span className="font-normal font-mono text-[9px] text-slate-500">{exp.dates}</span>
-            </div>
-            <p style={{ ...style.plainText, fontStyle: 'italic', margin: '0 0 2px 0' }}>{exp.company} — {exp.location}</p>
-            {exp.points.map((p, idx) => (
-              <p key={idx} style={style.bulletText}>• {p}</p>
-            ))}
-          </div>
-        ))}
+          // Rule 1: Parse first valid text block as Applicant Name Header
+          if (!hasRenderedName && trimmed.length < 40 && !trimmed.includes('|') && !trimmed.includes('@')) {
+            hasRenderedName = true;
+            
+            let candidateMetaBlock = '';
+            for (let j = 1; j <= 3; j++) {
+              if (rawLines[idx + j] && (rawLines[idx + j].includes('|') || rawLines[idx + j].includes('@') || rawLines[idx + j].includes('Developer'))) {
+                candidateMetaBlock = rawLines[idx + j].trim();
+                rawLines[idx + j] = ''; 
+                break;
+              }
+            }
 
-        <h2 style={style.heading}>Projects</h2>
-        {resumeData.projects.map((proj, i) => (
-          <div key={i} className="mb-2.5" style={{ pageBreakInside: 'avoid' }}>
-            <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '10.5px' }}>
-              <span>{proj.title}</span>
-              <span className="font-normal font-mono text-[9px] text-slate-500">{proj.dates}</span>
-            </div>
-            {proj.points.map((p, idx) => (
-              <p key={idx} style={style.bulletText}>• {p}</p>
-            ))}
-          </div>
-        ))}
+            return (
+              <div key={idx} className="w-full text-center">
+                <h1 style={style.name}>{trimmed}</h1>
+                {candidateMetaBlock && <p style={style.meta}>{candidateMetaBlock}</p>}
+              </div>
+            );
+          }
 
-        <h2 style={style.heading}>Education</h2>
-        <div style={{ pageBreakInside: 'avoid' }}>
-          <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '10.5px' }}>
-            <span>{resumeData.education.degree}</span>
-            <span className="font-normal font-mono text-[9px] text-slate-500">{resumeData.education.dates}</span>
-          </div>
-          <div className="flex justify-between items-center w-full text-[10px] text-slate-600">
-            <span>{resumeData.education.institution} — {resumeData.education.location}</span>
-            <span className="font-bold text-slate-900">{resumeData.education.score}</span>
-          </div>
-        </div>
+          // Rule 2: Identify structural section headers
+          const isSectionHeader = trimmed.length < 30 && /^(objective|summary|experience|work experience|employment|education|skills|technical skills|projects|languages|certifications|soft skills)/i.test(trimmed);
+          
+          // Rule 3: Identify roles, dates, and metadata elements
+          const isRoleMetadata = trimmed.length < 95 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed) || /oct|nov|jun|jul|aug|sept|jan|feb|mar|apr|may/i.test(trimmed)));
 
-        {/* FIXED: Lists out data points on distinct row tags with bullet points instead of a combined single line */}
-        <div style={{ pageBreakInside: 'avoid' }}>
-          <h2 style={style.heading}>Soft Skills</h2>
-          {resumeData.softSkills.map((skill, idx) => (
-            <p key={idx} style={style.bulletText}>• {skill}</p>
-          ))}
-        </div>
-        
-        <div style={{ pageBreakInside: 'avoid' }}>
-          <h2 style={style.heading}>Languages</h2>
-          {resumeData.languages.map((lang, idx) => (
-            <p key={idx} style={style.bulletText}>• {lang}</p>
-          ))}
-        </div>
+          if (isSectionHeader) {
+            return <h2 key={idx} style={style.heading}>{trimmed}</h2>;
+          }
+
+          if (isRoleMetadata) {
+            if (trimmed.includes('|') || trimmed.includes('–')) {
+              const dividerToken = trimmed.includes('|') ? '|' : '–';
+              const components = trimmed.split(dividerToken);
+              const rightComponent = components.pop().trim();
+              const leftComponent = components.join(dividerToken).trim();
+              
+              return (
+                <div key={idx} style={style.subHeading} className="flex justify-between items-center w-full font-bold style-subheader">
+                  <span>{leftComponent}</span>
+                  <span className="font-normal font-mono text-[9.5px] text-slate-500">{rightComponent}</span>
+                </div>
+              );
+            }
+            return <h4 key={idx} style={style.subHeading}>{trimmed}</h4>;
+          }
+
+          // Rule 4: Render soft skills and languages Vertical lists independently
+          const isSummaryBlock = trimmed.length > 110 && (trimmed.toLowerCase().includes('seeking') || trimmed.toLowerCase().includes('enthusiastic') || trimmed.toLowerCase().includes('professional with'));
+
+          if (isBulletRow || (!isSummaryBlock && trimmed.length > 18)) {
+            return (
+              <p key={idx} style={style.bulletText}>
+                • {trimmed}
+              </p>
+            );
+          }
+
+          return <p key={idx} style={style.plainText}>{trimmed}</p>;
+        })}
       </div>
     );
   };
@@ -603,7 +548,7 @@ function App() {
         {token && (
           <div className="flex items-center gap-2 sm:gap-4 animate-fade-in">
             <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shadow-sm shrink-0">{username.charAt(0)}</div>
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">{username.charAt(0)}</div>
               <div className="flex flex-col text-left max-w-[80px] sm:max-w-[120px]">
                 <span className="text-xs font-semibold text-slate-200 tracking-wide capitalize truncate">{username}</span>
                 <span className="text-[9px] font-medium text-emerald-400 flex items-center gap-1 font-mono leading-none mt-0.5">
@@ -770,7 +715,7 @@ function App() {
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
               
-              {/* ATS TEMPLATE TOOLBAR (5 DISTINCTIONS CHIPS SELECTOR) */}
+              {/* ATS TEMPLATE SELECTOR TOOLBAR (5 DISTINCT DESIGN VARIATIONS) */}
               <div className="p-3 bg-slate-950/60 border-b border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 gap-3">
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                   <span className="text-[11px] text-slate-400 font-mono mr-1">Design Styles:</span>
@@ -792,7 +737,7 @@ function App() {
               </div>
 
               {/* RESPONSIVE SCROLLER: Standard vertical touch scrolling on all phone viewports without horizontal breakdown widths */}
-              <div className="flex-1 overflow-y-auto p-2 sm:p-6 bg-slate-950/40 scrollbar-thin flex justify-center items-start w-full">
+              <div className="flex-1 overflow-y-auto p-2 sm:p-6 bg-slate-950/40 scrollbar-thin flex justify-start lg:justify-center items-start w-full">
                 <div className="w-full max-w-full lg:max-w-[210mm] lg:w-[210mm] bg-white p-6 sm:p-12 shadow-2xl rounded-md mx-auto overflow-hidden">
                   <div 
                     ref={resumePrintRef}
