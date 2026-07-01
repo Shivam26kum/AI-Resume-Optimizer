@@ -63,7 +63,7 @@ function App() {
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
-  // Active Template Idea Layout ID ('tech', 'corporate', 'minimal')
+  // Active Template Idea ('tech', 'corporate', 'minimal')
   const [selectedTemplate, setSelectedTemplate] = useState('tech');
 
   const getAuthConfig = useCallback(() => {
@@ -123,6 +123,7 @@ function App() {
       setUsername(receivedName);
       setAuthForm({ username: '', email: '', password: '' });
       setShowPassword(false);
+      toast.success(`Welcome back, ${receivedName}! Workspace open.`);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Authentication failed';
       setAuthError(errorMsg);
@@ -244,11 +245,11 @@ function App() {
     const element = resumePrintRef.current;
     if (!element) return;
     
-    toast.info('Compiling A4 sheet layout configurations...');
+    toast.info('Rendering explicit A4 canvas bounding boxes...');
 
-    // IRONCLAD FIXED A4 SPECIFICATIONS
+    // STRICT A4 HARDWARE SHEET PARAMS WITH EXACT PADDING RE-ENFORCEMENTS
     const opt = {
-      margin:       [0, 0, 0, 0], // Margins handled explicitly via CSS padding parameters
+      margin:       [0, 0, 0, 0], // Left empty so that the container style handles margins exactly
       filename:     `ATS_Optimized_Resume.pdf`,
       image:        { type: 'jpeg', quality: 1.0 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
@@ -258,7 +259,7 @@ function App() {
 
     const pdfEngine = html2pdf.default || html2pdf;
     pdfEngine().set(opt).from(element).save();
-    toast.success('ATS-Optimized A4 PDF generated!');
+    toast.success('ATS-Optimized A4 Sheet Exported!');
   };
 
   const renderOptimizedResumeBody = () => {
@@ -297,13 +298,12 @@ function App() {
     });
   };
 
-  // DYNAMIC ATS COMPLIANT ENGINE: Parses data blocks contextually from your text stream flawlessly
+  // ADVANCED DYNAMIC TEXT MAPPER: Classifies and binds lines dynamically into the canvas
   const renderCleanResumeBody = () => {
     if (!results || !results.resumeRawText) return null;
 
     let dynamicBodyText = results.resumeRawText;
 
-    // Apply Gemini optimization suggestions silently inline into the document matrix
     results.actionableImprovements?.forEach((item) => {
       if (item.currentText && item.suggestedText) {
         const cleanCurrent = item.currentText.trim();
@@ -313,20 +313,19 @@ function App() {
       }
     });
 
-    // Style blueprints matching specific clean layout requirements
     const themes = {
       tech: {
-        container: { fontFamily: 'Arial, sans-serif', color: '#1e293b', width: '100%', lineHeight: '1.4' },
-        name: { color: '#1e40af', fontSize: '20px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
-        meta: { color: '#475569', fontSize: '10px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #3b82f6', paddingBottom: '6px' },
-        heading: { color: '#1d4ed8', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
+        container: { color: '#1e293b', width: '100%', lineHeight: '1.5' },
+        name: { color: '#1e40af', fontSize: '22px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
+        meta: { color: '#475569', fontSize: '10px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
+        heading: { color: '#1d4ed8', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
         subHeading: { color: '#0f172a', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
         bulletText: { color: '#334155', fontSize: '10px', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
         plainText: { color: '#334155', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
       corporate: {
-        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%', lineHeight: '1.4' },
-        name: { color: '#000000', fontSize: '19px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
+        container: { color: '#000000', width: '100%', lineHeight: '1.4' },
+        name: { color: '#000000', fontSize: '20px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
         meta: { color: '#111111', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
         heading: { color: '#000000', fontSize: '11.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
         subHeading: { color: '#000000', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
@@ -334,7 +333,7 @@ function App() {
         plainText: { color: '#000000', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
       minimal: {
-        container: { fontFamily: 'Segoe UI, Helvetica, Arial, sans-serif', color: '#1c1917', width: '100%', lineHeight: '1.4' },
+        container: { color: '#1c1917', width: '100%', lineHeight: '1.4' },
         name: { color: '#1c1917', fontSize: '20px', fontWeight: '700', textAlign: 'left', margin: '0' },
         meta: { color: '#44403c', fontSize: '10px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
         heading: { color: '#44403c', fontSize: '11.5px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
@@ -354,25 +353,21 @@ function App() {
           let trimmed = line.trim();
           if (!trimmed) return null;
 
-          // Strip standalone structural artifacts
           if (trimmed === '•' || trimmed === '-' || trimmed === '*' || trimmed === '⚫') return null;
 
-          // Strip pre-existing bullet symbols to prevent double rendering
           let isBulletRow = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('⚫');
           if (isBulletRow) {
             trimmed = trimmed.substring(1).trim();
           }
 
-          // Rule 1: The very first solid row represents the Full Name Header
           if (!hasRenderedName && trimmed.length < 40 && !trimmed.includes('|') && !trimmed.includes('@')) {
             hasRenderedName = true;
             
-            // Check look-ahead lines for secondary title or metadata info metrics rows
             let candidateMetaBlock = '';
             for (let j = 1; j <= 3; j++) {
               if (rawLines[idx + j] && (rawLines[idx + j].includes('|') || rawLines[idx + j].includes('@') || rawLines[idx + j].includes('Developer'))) {
                 candidateMetaBlock = rawLines[idx + j].trim();
-                rawLines[idx + j] = ''; // Absorb cleanly to prevent duplicating text downstream
+                rawLines[idx + j] = ''; 
                 break;
               }
             }
@@ -385,10 +380,7 @@ function App() {
             );
           }
 
-          // Rule 2: Identify structural uppercase section dividers
           const isSectionHeader = trimmed.length < 30 && /^(objective|summary|experience|work experience|employment|education|skills|technical skills|projects|languages|certifications|soft skills)/i.test(trimmed);
-          
-          // Rule 3: Identify dates, roles, and company element chains
           const isRoleMetadata = trimmed.length < 95 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed) || /oct|nov|jun|jul|aug|sept|jan|feb|mar|apr|may/i.test(trimmed)));
 
           if (isSectionHeader) {
@@ -396,7 +388,6 @@ function App() {
           }
 
           if (isRoleMetadata) {
-            // Split metadata line across both container sides on tech or corporate templates
             if (trimmed.includes('|') || trimmed.includes('–')) {
               const dividerToken = trimmed.includes('|') ? '|' : '–';
               const components = trimmed.split(dividerToken);
@@ -404,27 +395,26 @@ function App() {
               const leftComponent = components.join(dividerToken).trim();
               
               return (
-                <div key={idx} style={style.subHeading} className="flex justify-between items-center w-full font-bold select-none style-subheader">
+                <div key={idx} style={style.subHeading} className="flex justify-between items-center w-full font-bold style-subheader" style={{ pageBreakInside: 'avoid' }}>
                   <span>{leftComponent}</span>
                   <span className="font-normal font-mono text-[9.5px] text-slate-600">{rightComponent}</span>
                 </div>
               );
             }
-            return <h4 key={idx} style={style.subHeading}>{trimmed}</h4>;
+            return <h4 key={idx} style={style.subHeading} style={{ pageBreakInside: 'avoid' }}>{trimmed}</h4>;
           }
 
-          // Rule 4: Apply Bullet points ONLY to list elements, keeping summaries flat
           const isSummaryBlock = trimmed.length > 110 && (trimmed.toLowerCase().includes('seeking') || trimmed.toLowerCase().includes('enthusiastic') || trimmed.toLowerCase().includes('professional with'));
 
           if (isBulletRow || (!isSummaryBlock && trimmed.length > 18)) {
             return (
-              <p key={idx} style={style.bulletText} className="page-break-avoid">
+              <p key={idx} style={style.bulletText} style={{ pageBreakInside: 'avoid' }}>
                 • {trimmed}
               </p>
             );
           }
 
-          return <p key={idx} style={style.plainText}>{trimmed}</p>;
+          return <p key={idx} style={style.plainText} style={{ pageBreakInside: 'avoid' }}>{trimmed}</p>;
         })}
       </div>
     );
@@ -535,7 +525,7 @@ function App() {
         {token && (
           <div className="flex items-center gap-2 sm:gap-4 animate-fade-in">
             <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 py-1.5 pl-2 pr-3 sm:pr-4 rounded-xl shadow-inner">
-              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shadow-sm shrink-0">{username.charAt(0)}</div>
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">{username.charAt(0)}</div>
               <div className="flex flex-col text-left max-w-[80px] sm:max-w-[120px]">
                 <span className="text-xs font-semibold text-slate-200 tracking-wide capitalize truncate">{username}</span>
                 <span className="text-[9px] font-medium text-emerald-400 flex items-center gap-1 font-mono leading-none mt-0.5">
@@ -698,7 +688,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 2: DOCUMENT EXPORTER CANVASES */}
+          {/* TAB 2: ATS RESUME CANVAS */}
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
               
@@ -721,14 +711,14 @@ function App() {
                 </button>
               </div>
 
-              {/* HORIZONTAL EMBED CANVAS SCROLLER WITH FIXED padding ON A4 PREVIEW WINDOW */}
-              <div className="flex-1 overflow-auto p-4 sm:p-6 flex justify-start items-start bg-slate-950/40 scrollbar-thin">
-                <div className="min-w-[816px] bg-slate-900 p-1 border border-slate-800 shadow-2xl rounded-md mx-auto">
+              {/* HORIZONTAL FLUID CANVAS SCROLLER WITH FULL DYNAMIC SCALING FOR SMARTPHONES */}
+              <div className="flex-1 overflow-x-auto lg:overflow-y-auto p-2 sm:p-6 flex justify-start lg:justify-center items-start bg-slate-950/40 scrollbar-thin">
+                <div className="w-full max-w-[210mm] lg:w-[210mm] bg-white p-6 sm:p-12 shadow-2xl rounded-md mx-auto overflow-hidden">
                   <div 
                     ref={resumePrintRef}
-                    className="w-[210mm] min-h-[297mm] flex flex-col text-left overflow-hidden bg-white shadow-inner"
+                    className="w-full text-left bg-white"
                     style={{ 
-                      padding: '20mm 15mm' // Standard A4 Document padding bounds mapping
+                      boxSizing: 'border-box'
                     }}
                   >
                     <div className="whitespace-pre-line max-w-full tracking-normal">
