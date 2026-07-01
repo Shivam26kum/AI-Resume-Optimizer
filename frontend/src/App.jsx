@@ -63,7 +63,7 @@ function App() {
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
-  // Active Template Layout Selection ('tech', 'corporate', 'minimal')
+  // Active Template Layout Selection Matrix ('tech', 'corporate', 'minimal', 'slate', 'editorial')
   const [selectedTemplate, setSelectedTemplate] = useState('tech');
 
   const getAuthConfig = useCallback(() => {
@@ -247,11 +247,11 @@ function App() {
     toast.info('Compiling A4 hardware print parameters...');
 
     const opt = {
-      margin:       [10, 15, 10, 15], // Set proper print margin bounds (Top, Left, Bottom, Right)
+      margin:       [10, 15, 10, 15], 
       filename:     `ATS_Optimized_Resume.pdf`,
       image:        { type: 'jpeg', quality: 1.0 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Native A4 template
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }, 
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } 
     };
 
@@ -296,41 +296,58 @@ function App() {
     });
   };
 
-  // CLEAN ATS MAPPING ENGINE: Fully structured data rendering without highlighting lines
+  // CLEAN ATS MAPPING ENGINE: Generates five styled templates without highlighting markers
   const renderCleanResumeBody = () => {
     const blueprints = {
       tech: {
-        container: { fontFamily: 'Arial, sans-serif', color: '#1e293b', width: '100%', padding: '0 5px' },
-        name: { color: '#1e40af', fontSize: '22px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
-        meta: { color: '#475569', fontSize: '10.5px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
-        heading: { color: '#1d4ed8', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
+        container: { fontFamily: 'Arial, sans-serif', color: '#1e293b', width: '100%', lineHeight: '1.4' },
+        name: { color: '#1e40af', fontSize: '21px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
+        meta: { color: '#475569', fontSize: '10px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
+        heading: { color: '#1d4ed8', fontSize: '11.5px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '14px', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' },
         subHeading: { color: '#0f172a', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#334155', fontSize: '10px', lineHeight: '1.5', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
-        plainText: { color: '#334155', fontSize: '10px', lineHeight: '1.5', margin: '4px 0', textAlign: 'justify' }
+        bulletText: { color: '#334155', fontSize: '10px', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
+        plainText: { color: '#334155', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
       corporate: {
-        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%', padding: '0 5px' },
-        name: { color: '#000000', fontSize: '20px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
-        meta: { color: '#111111', fontSize: '10.5px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
-        heading: { color: '#000000', fontSize: '12.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
+        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%', lineHeight: '1.4' },
+        name: { color: '#000000', fontSize: '19px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
+        meta: { color: '#111111', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
+        heading: { color: '#000000', fontSize: '11.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
         subHeading: { color: '#000000', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#000000', fontSize: '10px', lineHeight: '1.4', margin: '1px 0 1px 16px', textIndent: '-16px', textAlign: 'justify' },
-        plainText: { color: '#000000', fontSize: '10px', lineHeight: '1.4', margin: '3px 0', textAlign: 'justify' }
+        bulletText: { color: '#000000', fontSize: '10px', margin: '1px 0 1px 16px', textIndent: '-16px', textAlign: 'justify' },
+        plainText: { color: '#000000', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       },
       minimal: {
-        container: { fontFamily: 'Segoe UI, Arial, sans-serif', color: '#1c1917', width: '100%', padding: '0 5px' },
+        container: { fontFamily: 'Segoe UI, Arial, sans-serif', color: '#1c1917', width: '100%', lineHeight: '1.4' },
         name: { color: '#1c1917', fontSize: '20px', fontWeight: '700', textAlign: 'left', margin: '0' },
-        meta: { color: '#44403c', fontSize: '10.5px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
-        heading: { color: '#44403c', fontSize: '12px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
+        meta: { color: '#44403c', fontSize: '10px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
+        heading: { color: '#44403c', fontSize: '11.5px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
         subHeading: { color: '#1c1917', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#292524', fontSize: '10px', lineHeight: '1.4', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
-        plainText: { color: '#292524', fontSize: '10px', lineHeight: '1.4', margin: '3px 0', textAlign: 'justify' }
+        bulletText: { color: '#292524', fontSize: '10px', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
+        plainText: { color: '#292524', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
+      },
+      slate: {
+        container: { fontFamily: 'Verdana, sans-serif', color: '#334155', width: '100%', lineHeight: '1.4' },
+        name: { color: '#0f172a', fontSize: '19px', fontWeight: '700', textAlign: 'left', margin: '0 0 2px 0' },
+        meta: { color: '#64748b', fontSize: '9.5px', fontWeight: '400', textAlign: 'left', marginBottom: '12px', paddingBottom: '4px' },
+        heading: { color: '#475569', fontSize: '11px', fontWeight: '700', backgroundColor: '#f1f5f9', padding: '3px 6px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase' },
+        subHeading: { color: '#0f172a', fontSize: '10px', fontWeight: '700', marginTop: '3px', marginBottom: '1px' },
+        bulletText: { color: '#334155', fontSize: '9.5px', margin: '1px 0 1px 12px', textIndent: '-12px', textAlign: 'justify' },
+        plainText: { color: '#334155', fontSize: '9.5px', margin: '1px 0', textAlign: 'justify' }
+      },
+      editorial: {
+        container: { fontFamily: 'Georgia, serif', color: '#1c1917', width: '100%', lineHeight: '1.5' },
+        name: { color: '#431407', fontSize: '21px', fontWeight: '400', textAlign: 'center', margin: '0 0 2px 0', fontStyle: 'italic' },
+        meta: { color: '#7c2d12', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '16px', borderBottom: '1px dashed #7c2d12', paddingBottom: '6px' },
+        heading: { color: '#7c2d12', fontSize: '12px', fontWeight: '600', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', textAlign: 'left' },
+        subHeading: { color: '#1c1917', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
+        bulletText: { color: '#1c1917', fontSize: '10px', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
+        plainText: { color: '#1c1917', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
       }
     };
 
-    const activeStyle = blueprints[selectedTemplate] || blueprints.tech;
+    const style = blueprints[selectedTemplate] || blueprints.tech;
 
-    // Standardized resume template matching your profile data perfectly
     const resumeData = {
       name: "SHIVAM KUMAR",
       title: "Fresher | Frontend Developer | Web Developer",
@@ -396,7 +413,6 @@ function App() {
       languages: ["English (Professional)", "Hindi (Native)"]
     };
 
-    // Safely apply optimizations inside data layers
     if (results && Array.isArray(results.actionableImprovements)) {
       results.actionableImprovements.forEach((imp) => {
         if (!imp.currentText || !imp.suggestedText) return;
@@ -412,50 +428,50 @@ function App() {
 
     return (
       <div style={{ width: '100%' }}>
-        <h1 style={activeStyle.name}>{resumeData.name}</h1>
-        <p style={{ ...activeStyle.plainText, fontWeight: '700', color: '#2563eb', textAlign: 'center', margin: '0' }}>{resumeData.title}</p>
-        <p style={activeStyle.meta}>{resumeData.contact}</p>
+        <h1 style={style.name}>{resumeData.name}</h1>
+        <p style={{ ...style.plainText, fontWeight: '700', color: '#2563eb', textAlign: 'center', margin: '0' }}>{resumeData.title}</p>
+        <p style={style.meta}>{resumeData.contact}</p>
 
-        <h2 style={activeStyle.heading}>Summary</h2>
-        <p style={activeStyle.plainText}>{resumeData.summary}</p>
+        <h2 style={style.heading}>Summary</h2>
+        <p style={style.plainText}>{resumeData.summary}</p>
 
-        <h2 style={activeStyle.heading}>Skills</h2>
+        <h2 style={style.heading}>Skills</h2>
         {resumeData.skills.map((s, i) => (
-          <p key={i} style={activeStyle.plainText}><strong>{s.label}:</strong> {s.values}</p>
+          <p key={i} style={style.plainText}><strong>{s.label}:</strong> {s.values}</p>
         ))}
 
-        <h2 style={activeStyle.heading}>Work Experience</h2>
+        <h2 style={style.heading}>Work Experience</h2>
         {resumeData.experience.map((exp, i) => (
-          <div key={i} className="mb-2" style={{ pageBreakInside: 'avoid' }}>
-            <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '11px' }}>
+          <div key={i} className="mb-2.5" style={{ pageBreakInside: 'avoid' }}>
+            <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '10.5px' }}>
               <span>{exp.role}</span>
-              <span className="font-normal font-mono text-[9.5px] text-slate-500">{exp.dates}</span>
+              <span className="font-normal font-mono text-[9px] text-slate-500">{exp.dates}</span>
             </div>
-            <p style={{ ...activeStyle.plainText, fontStyle: 'italic', margin: '0 0 2px 0' }}>{exp.company} — {exp.location}</p>
+            <p style={{ ...style.plainText, fontStyle: 'italic', margin: '0 0 2px 0' }}>{exp.company} — {exp.location}</p>
             {exp.points.map((p, idx) => (
-              <p key={idx} style={activeStyle.bulletText}>• {p}</p>
+              <p key={idx} style={style.bulletText}>• {p}</p>
             ))}
           </div>
         ))}
 
-        <h2 style={activeStyle.heading}>Projects</h2>
+        <h2 style={style.heading}>Projects</h2>
         {resumeData.projects.map((proj, i) => (
-          <div key={i} className="mb-2" style={{ pageBreakInside: 'avoid' }}>
-            <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '11px' }}>
+          <div key={i} className="mb-2.5" style={{ pageBreakInside: 'avoid' }}>
+            <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '10.5px' }}>
               <span>{proj.title}</span>
-              <span className="font-normal font-mono text-[9.5px] text-slate-500">{proj.dates}</span>
+              <span className="font-normal font-mono text-[9px] text-slate-500">{proj.dates}</span>
             </div>
             {proj.points.map((p, idx) => (
-              <p key={idx} style={activeStyle.bulletText}>• {p}</p>
+              <p key={idx} style={style.bulletText}>• {p}</p>
             ))}
           </div>
         ))}
 
-        <h2 style={activeStyle.heading}>Education</h2>
+        <h2 style={style.heading}>Education</h2>
         <div style={{ pageBreakInside: 'avoid' }}>
-          <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '11px' }}>
+          <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '10.5px' }}>
             <span>{resumeData.education.degree}</span>
-            <span className="font-normal font-mono text-[9.5px] text-slate-500">{resumeData.education.dates}</span>
+            <span className="font-normal font-mono text-[9px] text-slate-500">{resumeData.education.dates}</span>
           </div>
           <div className="flex justify-between items-center w-full text-[10px] text-slate-600">
             <span>{resumeData.education.institution} — {resumeData.education.location}</span>
@@ -463,15 +479,14 @@ function App() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-2" style={{ pageBreakInside: 'avoid' }}>
-          <div>
-            <h2 style={activeStyle.heading}>Soft Skills</h2>
-            <p style={activeStyle.plainText}>{resumeData.softSkills.join('  •  ')}</p>
-          </div>
-          <div>
-            <h2 style={activeStyle.heading}>Languages</h2>
-            <p style={activeStyle.plainText}>{resumeData.languages.join('  •  ')}</p>
-          </div>
+        {/* FIXED: Removed horizontal layout split row parameters to prevent overlapping stacks */}
+        <div style={{ pageBreakInside: 'avoid' }}>
+          <h2 style={style.heading}>Soft Skills</h2>
+          <p style={style.plainText}>{resumeData.softSkills.join('  •  ')}</p>
+        </div>
+        <div style={{ pageBreakInside: 'avoid' }}>
+          <h2 style={style.heading}>Languages</h2>
+          <p style={style.plainText}>{resumeData.languages.join('  •  ')}</p>
         </div>
       </div>
     );
@@ -598,7 +613,7 @@ function App() {
       {/* WORKSPACE MAIN CONTAINER */}
       <div className="flex-1 w-full p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden relative scrollbar-none">
         
-        {/* PANEL 1: DESKTOP VAULT INDEX & MOBILE OVERLAY SLIDE-OUT */}
+        {/* PANEL 1: VAULT INDEX */}
         <aside className={`fixed inset-y-0 left-0 z-30 w-[280px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col overflow-hidden transition-transform duration-300 transform mt-[73px] lg:mt-0 lg:static lg:w-[22%] lg:bg-slate-900/40 lg:border lg:border-slate-800/60 lg:rounded-2xl lg:transform-none ${isMobileVaultOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 px-1"><History size={14} className="text-indigo-400" /> Audit Vault</h2>
           <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-slate-800">
@@ -658,7 +673,7 @@ function App() {
         </section>
 
         {/* PANEL 3: DYNAMIC WORKSPACE PORTAL */}
-        <section className="w-full lg:w-[50%] min-h-[520px] lg:min-h-0 bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
+        <section className="w-full lg:w-[50%] min-h-[480px] lg:min-h-0 bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
           <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-5 py-3 flex justify-between items-center shrink-0 gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
               <button type="button" onClick={() => setActiveTab('chat')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'chat' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
@@ -745,37 +760,41 @@ function App() {
             </div>
           )}
 
-          {/* TAB 2: ATS RESUME CANVAS (Fluid Responsiveness on Mobile Viewports, True A4 Aspect Ratio on Desktop) */}
+          {/* TAB 2: ATS RESUME CANVAS */}
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
               
-              {/* ATS TEMPLATE TOOLBAR IDEAS */}
-              <div className="p-3 bg-slate-950/60 border-b border-slate-800 flex flex-col xs:flex-row justify-between items-start xs:items-center shrink-0 gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-400 font-mono mr-1">ATS Layouts:</span>
-                  <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-                    <button type="button" onClick={() => setSelectedTemplate('tech')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'tech' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Modern Tech</button>
-                    <button type="button" onClick={() => setSelectedTemplate('corporate')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'corporate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Corporate</button>
-                    <button type="button" onClick={() => setSelectedTemplate('minimal')} className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer ${selectedTemplate === 'minimal' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Minimalist</button>
+              {/* ATS TEMPLATE SELECTOR TOOLBAR (5 DISTINCT DESIGN VARIATIONS) */}
+              <div className="p-3 bg-slate-950/60 border-b border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center shrink-0 gap-3">
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                  <span className="text-[11px] text-slate-400 font-mono mr-1">Design Style Ideas:</span>
+                  <div className="flex flex-wrap bg-slate-950 p-0.5 rounded-lg border border-slate-800 gap-0.5">
+                    <button type="button" onClick={() => setSelectedTemplate('tech')} className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${selectedTemplate === 'tech' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Modern Tech</button>
+                    <button type="button" onClick={() => setSelectedTemplate('corporate')} className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${selectedTemplate === 'corporate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Corporate</button>
+                    <button type="button" onClick={() => setSelectedTemplate('minimal')} className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${selectedTemplate === 'minimal' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Minimalist</button>
+                    <button type="button" onClick={() => setSelectedTemplate('slate')} className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${selectedTemplate === 'slate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Slate Block</button>
+                    <button type="button" onClick={() => setSelectedTemplate('editorial')} className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${selectedTemplate === 'editorial' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}>Editorial</button>
                   </div>
                 </div>
                 <button 
                   type="button" 
                   onClick={handleExportPDF} 
-                  className="w-full xs:w-auto py-1.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow-md cursor-pointer active:scale-[0.99]"
+                  className="w-full md:w-auto py-1.5 px-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 border border-transparent text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow-md cursor-pointer active:scale-[0.99] shrink-0"
                 >
                   <Download size={13} /> Export Clean PDF
                 </button>
               </div>
 
-              {/* DYNAMIC SCROLLER FRAME: Fluid bounds on phones, strict centered letter/A4 page frame on computers */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-950/40 scrollbar-thin flex justify-center items-start">
-                <div 
-                  ref={resumePrintRef}
-                  className="w-full lg:w-[210mm] lg:min-h-[297mm] bg-white rounded-md shadow-2xl p-6 sm:p-12 text-left text-slate-900 box-border border border-slate-200 transition-all duration-300"
-                >
-                  <div className="max-w-full tracking-normal">
-                    {renderCleanResumeBody()}
+              {/* RESPONSIVE SCROLLER: Standard touch behavior on phone screens, clear centered A4 layout frame on desktop viewports */}
+              <div className="flex-1 overflow-x-auto lg:overflow-y-auto p-2 sm:p-6 bg-slate-950/40 scrollbar-thin flex justify-start lg:justify-center items-start">
+                <div className="w-full max-w-[210mm] lg:w-[210mm] bg-white p-6 sm:p-12 shadow-2xl rounded-md mx-auto overflow-hidden">
+                  <div 
+                    ref={resumePrintRef}
+                    className="w-full text-left bg-white"
+                  >
+                    <div className="whitespace-pre-line max-w-full tracking-normal">
+                      {renderCleanResumeBody()}
+                    </div>
                   </div>
                 </div>
               </div>
