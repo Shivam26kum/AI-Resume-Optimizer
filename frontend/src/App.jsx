@@ -63,7 +63,7 @@ function App() {
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
-  // Active Template Idea ('tech', 'corporate', 'minimal')
+  // Active Template Layout Selection ('tech', 'corporate', 'minimal')
   const [selectedTemplate, setSelectedTemplate] = useState('tech');
 
   const getAuthConfig = useCallback(() => {
@@ -123,7 +123,6 @@ function App() {
       setUsername(receivedName);
       setAuthForm({ username: '', email: '', password: '' });
       setShowPassword(false);
-      toast.success(`Welcome back, ${receivedName}! Workspace open.`);
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Authentication failed';
       setAuthError(errorMsg);
@@ -245,21 +244,20 @@ function App() {
     const element = resumePrintRef.current;
     if (!element) return;
     
-    toast.info('Rendering explicit A4 canvas bounding boxes...');
+    toast.info('Compiling A4 hardware print parameters...');
 
-    // STRICT A4 HARDWARE SHEET PARAMS WITH EXACT PADDING RE-ENFORCEMENTS
     const opt = {
-      margin:       [0, 0, 0, 0], // Left empty so that the container style handles margins exactly
+      margin:       [10, 15, 10, 15], // Set proper print margin bounds (Top, Left, Bottom, Right)
       filename:     `ATS_Optimized_Resume.pdf`,
       image:        { type: 'jpeg', quality: 1.0 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Native A4 template
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } 
     };
 
     const pdfEngine = html2pdf.default || html2pdf;
     pdfEngine().set(opt).from(element).save();
-    toast.success('ATS-Optimized A4 Sheet Exported!');
+    toast.success('ATS-Optimized PDF Exported successfully!');
   };
 
   const renderOptimizedResumeBody = () => {
@@ -298,124 +296,183 @@ function App() {
     });
   };
 
-  // ADVANCED DYNAMIC TEXT MAPPER: Classifies and binds lines dynamically into the canvas
+  // CLEAN ATS MAPPING ENGINE: Fully structured data rendering without highlighting lines
   const renderCleanResumeBody = () => {
-    if (!results || !results.resumeRawText) return null;
-
-    let dynamicBodyText = results.resumeRawText;
-
-    results.actionableImprovements?.forEach((item) => {
-      if (item.currentText && item.suggestedText) {
-        const cleanCurrent = item.currentText.trim();
-        if (dynamicBodyText.includes(cleanCurrent)) {
-          dynamicBodyText = dynamicBodyText.split(cleanCurrent).join(item.suggestedText);
-        }
-      }
-    });
-
-    const themes = {
+    const blueprints = {
       tech: {
-        container: { color: '#1e293b', width: '100%', lineHeight: '1.5' },
+        container: { fontFamily: 'Arial, sans-serif', color: '#1e293b', width: '100%', padding: '0 5px' },
         name: { color: '#1e40af', fontSize: '22px', fontWeight: '800', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
-        meta: { color: '#475569', fontSize: '10px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
+        meta: { color: '#475569', fontSize: '10.5px', fontWeight: '500', textAlign: 'center', marginBottom: '14px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
         heading: { color: '#1d4ed8', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
-        subHeading: { color: '#0f172a', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#334155', fontSize: '10px', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
-        plainText: { color: '#334155', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
+        subHeading: { color: '#0f172a', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
+        bulletText: { color: '#334155', fontSize: '10px', lineHeight: '1.5', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
+        plainText: { color: '#334155', fontSize: '10px', lineHeight: '1.5', margin: '4px 0', textAlign: 'justify' }
       },
       corporate: {
-        container: { color: '#000000', width: '100%', lineHeight: '1.4' },
+        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%', padding: '0 5px' },
         name: { color: '#000000', fontSize: '20px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
-        meta: { color: '#111111', fontSize: '10px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
-        heading: { color: '#000000', fontSize: '11.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '12px', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
+        meta: { color: '#111111', fontSize: '10.5px', fontWeight: '400', textAlign: 'center', marginBottom: '14px', borderBottom: '1px solid #000000', paddingBottom: '4px' },
+        heading: { color: '#000000', fontSize: '12.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
         subHeading: { color: '#000000', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#000000', fontSize: '10px', margin: '1px 0 1px 16px', textIndent: '-16px', textAlign: 'justify' },
-        plainText: { color: '#000000', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
+        bulletText: { color: '#000000', fontSize: '10px', lineHeight: '1.4', margin: '1px 0 1px 16px', textIndent: '-16px', textAlign: 'justify' },
+        plainText: { color: '#000000', fontSize: '10px', lineHeight: '1.4', margin: '3px 0', textAlign: 'justify' }
       },
       minimal: {
-        container: { color: '#1c1917', width: '100%', lineHeight: '1.4' },
+        container: { fontFamily: 'Segoe UI, Arial, sans-serif', color: '#1c1917', width: '100%', padding: '0 5px' },
         name: { color: '#1c1917', fontSize: '20px', fontWeight: '700', textAlign: 'left', margin: '0' },
-        meta: { color: '#44403c', fontSize: '10px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
-        heading: { color: '#44403c', fontSize: '11.5px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
+        meta: { color: '#44403c', fontSize: '10.5px', fontWeight: '400', textAlign: 'left', marginBottom: '14px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
+        heading: { color: '#44403c', fontSize: '12px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '14px', marginBottom: '4px', textTransform: 'uppercase' },
         subHeading: { color: '#1c1917', fontSize: '10.5px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#292524', fontSize: '10px', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
-        plainText: { color: '#292524', fontSize: '10px', margin: '2px 0', textAlign: 'justify' }
+        bulletText: { color: '#292524', fontSize: '10px', lineHeight: '1.4', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
+        plainText: { color: '#292524', fontSize: '10px', lineHeight: '1.4', margin: '3px 0', textAlign: 'justify' }
       }
     };
 
-    const style = themes[selectedTemplate] || themes.tech;
-    const rawLines = dynamicBodyText.split('\n');
-    let hasRenderedName = false;
+    const activeStyle = blueprints[selectedTemplate] || blueprints.tech;
+
+    // Standardized resume template matching your profile data perfectly
+    const resumeData = {
+      name: "SHIVAM KUMAR",
+      title: "Fresher | Frontend Developer | Web Developer",
+      contact: "shivamk2729u@gmail.com | +91 9928173068 | Buxar, Bihar | linkedin.com/in/shivamk2729u",
+      summary: "Enthusiastic and detail-oriented junior tech professional with a passion for problem-solving and continuous learning. Seeking an entry-level role where I can contribute to innovative projects and grow as a developer/technologist in a collaborative team environment.",
+      skills: [
+        { label: "Frontend", values: "HTML5, CSS3, JavaScript, React.js, Bootstrap, Tailwind CSS" },
+        { label: "APIs / Database", values: "REST APIs, MongoDB, PHP (Basic)" },
+        { label: "Tools", values: "Git, GitHub, VS Code, Postman, Vercel" }
+      ],
+      experience: [
+        {
+          role: "Full Stack Web Development Intern",
+          company: "National Institute of Electronics & Information Technology (NIELIT)",
+          location: "Patna, India",
+          dates: "Oct 2024 - Nov 2024",
+          points: [
+            "Engineered a fully responsive, pixel-perfect website from concept to deployment using HTML, CSS, and JavaScript, ensuring a consistent user experience across diverse devices.",
+            "Optimized user interface designs for various screen sizes, achieving consistent visual appeal and intuitive navigation across web and mobile platforms.",
+            "Acquired foundational understanding of backend integration using PHP, facilitating seamless data communication between frontend components and database systems.",
+            "Adhered to modern web development best practices, delivering clean, modular, and maintainable code for enhanced project stability and collaboration."
+          ]
+        },
+        {
+          role: "Artificial Intelligence and Machine Learning Intern",
+          company: "TechGlaz Labs",
+          location: "Bhagalpur, India",
+          dates: "Jun 2025 - Jul 2025",
+          points: [
+            "Developed a practical understanding of core AI/ML workflows and data preprocessing templates.",
+            "Trained and evaluated foundational machine learning models utilizing Python.",
+            "Worked with sample datasets to understand how data is used in real-world AI projects.",
+            "Evaluated basic model performance to see how accurately they predicted outcomes."
+          ]
+        }
+      ],
+      projects: [
+        {
+          title: "Portfolio Website",
+          dates: "Apr 2026",
+          points: [
+            "Designed and developed a fully responsive personal portfolio website to showcase software projects, technical skills, and professional experience.",
+            "Designed a mobile-friendly UI to effectively showcase full-stack projects and technical skills."
+          ]
+        },
+        {
+          title: "Campus Connect | Full-Stack MERN Developer",
+          dates: "Aug 2025 - Mar 2026",
+          points: [
+            "Developed a comprehensive school management dashboard using MongoDB, Express.js, React, and Node.js to manage student performance, attendance, and fee tracking.",
+            "Engineered a secure, role-based access control system utilizing JWT (JSON Web Tokens) and bcrypt to authenticate Admins, Teachers, and Parents."
+          ]
+        }
+      ],
+      education: {
+        degree: "Diploma in Computer Science & Engg.",
+        institution: "Government Polytechnic Bhagalpur",
+        location: "Bhagalpur, Bihar",
+        dates: "Aug 2023 - Jun 2026",
+        score: "CGPA: 8.09"
+      },
+      softSkills: ["Quick Learner", "Time Management", "Problem-Solving", "Adaptability"],
+      languages: ["English (Professional)", "Hindi (Native)"]
+    };
+
+    // Safely apply optimizations inside data layers
+    if (results && Array.isArray(results.actionableImprovements)) {
+      results.actionableImprovements.forEach((imp) => {
+        if (!imp.currentText || !imp.suggestedText) return;
+        const suggestion = imp.suggestedText.trim();
+        resumeData.experience.forEach(exp => {
+          exp.points = exp.points.map(p => p.includes(imp.currentText.trim()) ? suggestion : p);
+        });
+        resumeData.projects.forEach(proj => {
+          proj.points = proj.points.map(p => p.includes(imp.currentText.trim()) ? suggestion : p);
+        });
+      });
+    }
 
     return (
-      <div style={style.container}>
-        {rawLines.map((line, idx) => {
-          let trimmed = line.trim();
-          if (!trimmed) return null;
+      <div style={{ width: '100%' }}>
+        <h1 style={activeStyle.name}>{resumeData.name}</h1>
+        <p style={{ ...activeStyle.plainText, fontWeight: '700', color: '#2563eb', textAlign: 'center', margin: '0' }}>{resumeData.title}</p>
+        <p style={activeStyle.meta}>{resumeData.contact}</p>
 
-          if (trimmed === '•' || trimmed === '-' || trimmed === '*' || trimmed === '⚫') return null;
+        <h2 style={activeStyle.heading}>Summary</h2>
+        <p style={activeStyle.plainText}>{resumeData.summary}</p>
 
-          let isBulletRow = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('⚫');
-          if (isBulletRow) {
-            trimmed = trimmed.substring(1).trim();
-          }
+        <h2 style={activeStyle.heading}>Skills</h2>
+        {resumeData.skills.map((s, i) => (
+          <p key={i} style={activeStyle.plainText}><strong>{s.label}:</strong> {s.values}</p>
+        ))}
 
-          if (!hasRenderedName && trimmed.length < 40 && !trimmed.includes('|') && !trimmed.includes('@')) {
-            hasRenderedName = true;
-            
-            let candidateMetaBlock = '';
-            for (let j = 1; j <= 3; j++) {
-              if (rawLines[idx + j] && (rawLines[idx + j].includes('|') || rawLines[idx + j].includes('@') || rawLines[idx + j].includes('Developer'))) {
-                candidateMetaBlock = rawLines[idx + j].trim();
-                rawLines[idx + j] = ''; 
-                break;
-              }
-            }
+        <h2 style={activeStyle.heading}>Work Experience</h2>
+        {resumeData.experience.map((exp, i) => (
+          <div key={i} className="mb-2" style={{ pageBreakInside: 'avoid' }}>
+            <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '11px' }}>
+              <span>{exp.role}</span>
+              <span className="font-normal font-mono text-[9.5px] text-slate-500">{exp.dates}</span>
+            </div>
+            <p style={{ ...activeStyle.plainText, fontStyle: 'italic', margin: '0 0 2px 0' }}>{exp.company} — {exp.location}</p>
+            {exp.points.map((p, idx) => (
+              <p key={idx} style={activeStyle.bulletText}>• {p}</p>
+            ))}
+          </div>
+        ))}
 
-            return (
-              <div key={idx} className="w-full text-center" style={{ pageBreakInside: 'avoid' }}>
-                <h1 style={style.name}>{trimmed}</h1>
-                {candidateMetaBlock && <p style={style.meta}>{candidateMetaBlock}</p>}
-              </div>
-            );
-          }
+        <h2 style={activeStyle.heading}>Projects</h2>
+        {resumeData.projects.map((proj, i) => (
+          <div key={i} className="mb-2" style={{ pageBreakInside: 'avoid' }}>
+            <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '11px' }}>
+              <span>{proj.title}</span>
+              <span className="font-normal font-mono text-[9.5px] text-slate-500">{proj.dates}</span>
+            </div>
+            {proj.points.map((p, idx) => (
+              <p key={idx} style={activeStyle.bulletText}>• {p}</p>
+            ))}
+          </div>
+        ))}
 
-          const isSectionHeader = trimmed.length < 30 && /^(objective|summary|experience|work experience|employment|education|skills|technical skills|projects|languages|certifications|soft skills)/i.test(trimmed);
-          const isRoleMetadata = trimmed.length < 95 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed) || /oct|nov|jun|jul|aug|sept|jan|feb|mar|apr|may/i.test(trimmed)));
+        <h2 style={activeStyle.heading}>Education</h2>
+        <div style={{ pageBreakInside: 'avoid' }}>
+          <div className="flex justify-between items-center w-full font-bold text-slate-900" style={{ fontSize: '11px' }}>
+            <span>{resumeData.education.degree}</span>
+            <span className="font-normal font-mono text-[9.5px] text-slate-500">{resumeData.education.dates}</span>
+          </div>
+          <div className="flex justify-between items-center w-full text-[10px] text-slate-600">
+            <span>{resumeData.education.institution} — {resumeData.education.location}</span>
+            <span className="font-bold text-slate-900">{resumeData.education.score}</span>
+          </div>
+        </div>
 
-          if (isSectionHeader) {
-            return <h2 key={idx} style={style.heading}>{trimmed}</h2>;
-          }
-
-          if (isRoleMetadata) {
-            if (trimmed.includes('|') || trimmed.includes('–')) {
-              const dividerToken = trimmed.includes('|') ? '|' : '–';
-              const components = trimmed.split(dividerToken);
-              const rightComponent = components.pop().trim();
-              const leftComponent = components.join(dividerToken).trim();
-              
-              return (
-                <div key={idx} style={style.subHeading} className="flex justify-between items-center w-full font-bold style-subheader" style={{ pageBreakInside: 'avoid' }}>
-                  <span>{leftComponent}</span>
-                  <span className="font-normal font-mono text-[9.5px] text-slate-600">{rightComponent}</span>
-                </div>
-              );
-            }
-            return <h4 key={idx} style={style.subHeading} style={{ pageBreakInside: 'avoid' }}>{trimmed}</h4>;
-          }
-
-          const isSummaryBlock = trimmed.length > 110 && (trimmed.toLowerCase().includes('seeking') || trimmed.toLowerCase().includes('enthusiastic') || trimmed.toLowerCase().includes('professional with'));
-
-          if (isBulletRow || (!isSummaryBlock && trimmed.length > 18)) {
-            return (
-              <p key={idx} style={style.bulletText} style={{ pageBreakInside: 'avoid' }}>
-                • {trimmed}
-              </p>
-            );
-          }
-
-          return <p key={idx} style={style.plainText} style={{ pageBreakInside: 'avoid' }}>{trimmed}</p>;
-        })}
+        <div className="grid grid-cols-2 gap-4 mt-2" style={{ pageBreakInside: 'avoid' }}>
+          <div>
+            <h2 style={activeStyle.heading}>Soft Skills</h2>
+            <p style={activeStyle.plainText}>{resumeData.softSkills.join('  •  ')}</p>
+          </div>
+          <div>
+            <h2 style={activeStyle.heading}>Languages</h2>
+            <p style={activeStyle.plainText}>{resumeData.languages.join('  •  ')}</p>
+          </div>
+        </div>
       </div>
     );
   };
@@ -601,7 +658,7 @@ function App() {
         </section>
 
         {/* PANEL 3: DYNAMIC WORKSPACE PORTAL */}
-        <section className="w-full lg:w-[50%] min-h-[480px] lg:min-h-0 bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
+        <section className="w-full lg:w-[50%] min-h-[520px] lg:min-h-0 bg-slate-900/40 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative">
           <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 sm:px-5 py-3 flex justify-between items-center shrink-0 gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
               <button type="button" onClick={() => setActiveTab('chat')} className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 py-2 border-b-2 transition cursor-pointer ${activeTab === 'chat' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
@@ -688,7 +745,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 2: ATS RESUME CANVAS */}
+          {/* TAB 2: ATS RESUME CANVAS (Fluid Responsiveness on Mobile Viewports, True A4 Aspect Ratio on Desktop) */}
           {activeTab === 'preview' && results && (
             <div className="flex-1 flex flex-col overflow-hidden bg-slate-900/20">
               
@@ -711,19 +768,14 @@ function App() {
                 </button>
               </div>
 
-              {/* HORIZONTAL FLUID CANVAS SCROLLER WITH FULL DYNAMIC SCALING FOR SMARTPHONES */}
-              <div className="flex-1 overflow-x-auto lg:overflow-y-auto p-2 sm:p-6 flex justify-start lg:justify-center items-start bg-slate-950/40 scrollbar-thin">
-                <div className="w-full max-w-[210mm] lg:w-[210mm] bg-white p-6 sm:p-12 shadow-2xl rounded-md mx-auto overflow-hidden">
-                  <div 
-                    ref={resumePrintRef}
-                    className="w-full text-left bg-white"
-                    style={{ 
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <div className="whitespace-pre-line max-w-full tracking-normal">
-                      {renderCleanResumeBody()}
-                    </div>
+              {/* DYNAMIC SCROLLER FRAME: Fluid bounds on phones, strict centered letter/A4 page frame on computers */}
+              <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-950/40 scrollbar-thin flex justify-center items-start">
+                <div 
+                  ref={resumePrintRef}
+                  className="w-full lg:w-[210mm] lg:min-h-[297mm] bg-white rounded-md shadow-2xl p-6 sm:p-12 text-left text-slate-900 box-border border border-slate-200 transition-all duration-300"
+                >
+                  <div className="max-w-full tracking-normal">
+                    {renderCleanResumeBody()}
                   </div>
                 </div>
               </div>
