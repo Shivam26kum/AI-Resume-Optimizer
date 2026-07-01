@@ -29,7 +29,6 @@ import {
   X,
   MoreVertical,
   Trash2,
-  Layout,
   Briefcase
 } from 'lucide-react';
 
@@ -64,7 +63,7 @@ function App() {
   const [targetDeleteLog, setTargetDeleteLog] = useState(null); 
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
-  // Active Template State Idea ('tech', 'corporate', 'minimal')
+  // Active Template Layout ID ('tech', 'corporate', 'minimal')
   const [selectedTemplate, setSelectedTemplate] = useState('tech');
 
   const getAuthConfig = useCallback(() => {
@@ -246,11 +245,11 @@ function App() {
     const element = resumePrintRef.current;
     if (!element) return;
     
-    toast.info('Compiling multi-page rendering engine parameters...');
+    toast.info('Compiling print engine layout configurations...');
 
     const opt = {
       margin:       [0.5, 0.5, 0.5, 0.5],
-      filename:     `Clean_ATS_Optimized_Resume.pdf`,
+      filename:     `ATS_Optimized_Resume.pdf`,
       image:        { type: 'jpeg', quality: 1.0 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
@@ -259,10 +258,9 @@ function App() {
 
     const pdfEngine = html2pdf.default || html2pdf;
     pdfEngine().set(opt).from(element).save();
-    toast.success('Clean ATS resume exported!');
+    toast.success('ATS-Optimized clean PDF generated!');
   };
 
-  // DIAGNOSTIC SCREEN: Left Workspace dashboard panel tracking adjustments
   const renderOptimizedResumeBody = () => {
     if (!results || !results.resumeRawText) {
       return <p style={{ color: '#94a3b8', fontStyle: 'italic', textAlign: 'center' }}>Raw layout text unavailable. Please complete a fresh scan.</p>;
@@ -299,195 +297,128 @@ function App() {
     });
   };
 
-  // ACCURATE HARMONIZED ENGINE: Maps exact data blocks without highlights or stray bullet strings
+  // NEW DYNAMIC PARSER: Intelligently parses raw lines contextually and handles multi-page documents perfectly
   const renderCleanResumeBody = () => {
-    // Structural Design Configurations for Canvas
-    const configs = {
+    if (!results || !results.resumeRawText) return null;
+
+    let dynamicBodyText = results.resumeRawText;
+
+    // Apply optimizations inline completely silently
+    results.actionableImprovements?.forEach((item) => {
+      if (item.currentText && item.suggestedText) {
+        const cleanCurrent = item.currentText.trim();
+        if (dynamicBodyText.includes(cleanCurrent)) {
+          dynamicBodyText = dynamicBodyText.split(cleanCurrent).join(item.suggestedText);
+        }
+      }
+    });
+
+    // Style blueprints for layout standard ideas
+    const themeBlueprints = {
       tech: {
-        container: { fontFamily: 'Arial, Helvetica, sans-serif', color: '#1e293b', width: '100%', padding: '10px' },
-        name: { color: '#0f172a', fontSize: '24px', fontWeight: '800', textAlign: 'left', margin: '0 0 2px 0' },
-        meta: { color: '#475569', fontSize: '10.5px', fontWeight: '500', textAlign: 'left', marginBottom: '16px', borderBottom: '2px solid #2563eb', paddingBottom: '8px' },
-        heading: { color: '#1d4ed8', fontSize: '13px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '18px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' },
-        subHeading: { color: '#0f172a', fontSize: '11px', fontWeight: '700', marginTop: '6px', marginBottom: '2px' },
-        bulletText: { color: '#334155', fontSize: '10.5px', lineHeight: '1.6', margin: '3px 0 3px 14px', textIndent: '-14px', textAlign: 'justify' },
-        plainText: { color: '#334155', fontSize: '10.5px', lineHeight: '1.6', margin: '4px 0', textAlign: 'justify' }
+        container: { fontFamily: 'Arial, Helvetica, sans-serif', color: '#1e293b', width: '100%' },
+        name: { color: '#1e40af', fontSize: '22px', fontWeight: '800', textAlign: 'left', textTransform: 'uppercase', margin: '0 0 2px 0' },
+        meta: { color: '#475569', fontSize: '10.5px', fontWeight: '500', textAlign: 'left', marginBottom: '16px', borderBottom: '2px solid #2563eb', paddingBottom: '6px' },
+        heading: { color: '#1d4ed8', fontSize: '12.5px', fontWeight: '700', borderBottom: '1px solid #cbd5e1', paddingBottom: '2px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' },
+        subHeading: { color: '#0f172a', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
+        bulletText: { color: '#334155', fontSize: '10.5px', lineHeight: '1.5', margin: '2px 0 2px 14px', textIndent: '-14px', textAlign: 'justify' },
+        plainText: { color: '#334155', fontSize: '10.5px', lineHeight: '1.5', margin: '2px 0', textAlign: 'justify' }
       },
       corporate: {
-        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%', padding: '10px' },
-        name: { color: '#000000', fontSize: '22px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', margin: '0 0 2px 0' },
+        container: { fontFamily: 'Times New Roman, Georgia, serif', color: '#000000', width: '100%' },
+        name: { color: '#000000', fontSize: '20px', fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 2px 0' },
         meta: { color: '#111111', fontSize: '10.5px', fontWeight: '400', textAlign: 'center', marginBottom: '18px', borderBottom: '1px solid #000000', paddingBottom: '6px' },
-        heading: { color: '#000000', fontSize: '12.5px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
-        subHeading: { color: '#000000', fontSize: '11px', fontWeight: '700', marginTop: '5px', marginBottom: '1px' },
-        bulletText: { color: '#000000', fontSize: '10.5px', lineHeight: '1.5', margin: '2px 0 2px 16px', textIndent: '-16px', textAlign: 'justify' },
-        plainText: { color: '#000000', fontSize: '10.5px', lineHeight: '1.5', margin: '4px 0', textAlign: 'justify' }
+        heading: { color: '#000000', fontSize: '12px', fontWeight: '700', borderBottom: '1px solid #000000', paddingBottom: '1px', marginTop: '14px', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center' },
+        subHeading: { color: '#000000', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
+        bulletText: { color: '#000000', fontSize: '10.5px', lineHeight: '1.4', margin: '1px 0 1px 16px', textIndent: '-16px', textAlign: 'justify' },
+        plainText: { color: '#000000', fontSize: '10.5px', lineHeight: '1.5', margin: '2px 0', textAlign: 'justify' }
       },
       minimal: {
-        container: { fontFamily: 'Segoe UI, Arial, sans-serif', color: '#1c1917', width: '100%', padding: '10px' },
+        container: { fontFamily: 'Segoe UI, Arial, sans-serif', color: '#1c1917', width: '100%' },
         name: { color: '#1c1917', fontSize: '22px', fontWeight: '700', textAlign: 'left', margin: '0' },
-        meta: { color: '#44403c', fontSize: '10.5px', fontWeight: '400', textAlign: 'left', marginBottom: '16px', borderBottom: '1px solid #e7e5e4', paddingBottom: '6px' },
+        meta: { color: '#44403c', fontSize: '10.5px', fontWeight: '400', textAlign: 'left', marginBottom: '16px', borderBottom: '1px solid #e7e5e4', paddingBottom: '4px' },
         heading: { color: '#44403c', fontSize: '12px', fontWeight: '700', borderLeft: '3px solid #78716c', paddingLeft: '8px', marginTop: '16px', marginBottom: '6px', textTransform: 'uppercase' },
         subHeading: { color: '#1c1917', fontSize: '11px', fontWeight: '700', marginTop: '4px', marginBottom: '1px' },
-        bulletText: { color: '#292524', fontSize: '10.5px', lineHeight: '1.5', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
-        plainText: { color: '#292524', fontSize: '10.5px', lineHeight: '1.5', margin: '4px 0', textAlign: 'justify' }
+        bulletText: { color: '#292524', fontSize: '10.5px', lineHeight: '1.4', margin: '2px 0 2px 12px', textIndent: '-12px', textAlign: 'justify' },
+        plainText: { color: '#292524', fontSize: '10.5px', lineHeight: '1.4', margin: '2px 0', textAlign: 'justify' }
       }
     };
 
     const style = configs[selectedTemplate] || configs.tech;
-
-    // Hardcoded high-fidelity fallback layer synchronized directly with your accurate parsed PDF credentials
-    const data = {
-      name: "SHIVAM KUMAR",
-      title: "Fresher | Frontend Developer | Web Developer",
-      contact: "shivamk2729u@gmail.com  |  +91 9928173068  |  Buxar, Bihar  |  linkedin.com/in/shivamk2729u",
-      summary: "Enthusiastic and detail-oriented junior tech professional with a passion for problem-solving and continuous learning. Seeking an entry-level role where I can contribute to innovative projects and grow as a developer/technologist in a collaborative team environment.",
-      skills: [
-        { cat: "Frontend", val: "HTML5, CSS3, JavaScript, React.js, Bootstrap, Tailwind CSS" },
-        { cat: "APIs / Database", val: "REST APIs, MongoDB, PHP (Basic)" },
-        { cat: "Tools", val: "Git, GitHub, VS Code, Postman, Vercel" }
-      ],
-      experience: [
-        {
-          role: "Full Stack Web Development Intern",
-          company: "National Institute of Electronics & Information Technology (NIELIT)",
-          loc: "Patna, India",
-          date: "Oct 2024 - Nov 2024",
-          bullets: [
-            "Engineered a fully responsive, pixel-perfect website from concept to deployment using HTML, CSS, and JavaScript, ensuring a consistent user experience across diverse devices.",
-            "Optimized user interface designs for various screen sizes, achieving consistent visual appeal and intuitive navigation across web and mobile platforms.",
-            "Acquired foundational understanding of backend integration using PHP, facilitating seamless data communication between frontend components and database systems.",
-            "Adhered to modern web development best practices, delivering clean, modular, and maintainable code for enhanced project stability and collaboration."
-          ]
-        },
-        {
-          role: "Artificial Intelligence and Machine Learning Intern",
-          company: "TechGlaz Labs",
-          loc: "Bhagalpur, India",
-          date: "Jun 2025 - Jul 2025",
-          bullets: [
-            "Gained practical insights into data preprocessing and analytical workflows in AI/ML, enhancing problem-solving and logical reasoning abilities.",
-            "Trained and evaluated foundational machine learning models utilizing Python data frameworks.",
-            "Worked with sample datasets to map how predictive analytical operations execute inside real-world production projects.",
-            "Evaluated structural classification models to track data flow limits across pipeline matrices."
-          ]
-        }
-      ],
-      projects: [
-        {
-          name: "Portfolio Website",
-          date: "Apr 2026",
-          bullets: [
-            "Designed and developed a fully responsive personal portfolio website to showcase software projects, technical skills, and professional experience.",
-            "Designed a mobile-friendly UI to effectively showcase full-stack web applications."
-          ]
-        },
-        {
-          name: "Campus Connect | Full-Stack MERN Developer",
-          date: "Aug 2025 - Mar 2026",
-          bullets: [
-            "Developed a comprehensive school management dashboard using MongoDB, Express.js, React, and Node.js to manage student performance, attendance, and fee tracking.",
-            "Engineered a secure, role-based access control system utilizing JWT (JSON Web Tokens) and bcrypt to authenticate Admins, Teachers, and Parents."
-          ]
-        }
-      ],
-      education: {
-        degree: "Diploma in Computer Science & Engg.",
-        school: "Government Polytechnic Bhagalpur",
-        loc: "Bhagalpur, Bihar",
-        date: "Aug 2023 - Jun 2026",
-        metrics: "CGPA: 8.09"
-      },
-      softSkills: ["Problem-Solving", "Adaptability", "Quick Learner", "Time Management"],
-      languages: ["English (Professional)", "Hindi (Native)"]
-    };
-
-    // Dynamically apply optimizations if they exist in results mapping context
-    if (results && Array.isArray(results.actionableImprovements)) {
-      results.actionableImprovements.forEach((imp) => {
-        if (!imp.currentText || !imp.suggestedText) return;
-        const suggestion = imp.suggestedText.trim();
-        
-        // Loop and perform deep check replacements inside accurate data blueprints safely
-        data.experience.forEach(exp => {
-          exp.bullets = exp.bullets.map(b => b.includes(imp.currentText.trim()) ? suggestion : b);
-        });
-        data.projects.forEach(proj => {
-          proj.bullets = proj.bullets.map(b => b.includes(imp.currentText.trim()) ? suggestion : b);
-        });
-      });
-    }
+    const lines = dynamicBodyText.split('\n');
+    let hasRenderedName = false;
 
     return (
-      <div style={style.container}>
-        {/* HEADER */}
-        <h1 style={style.name}>{data.name}</h1>
-        <p style={{ ...style.plainText, fontWeight: '700', color: '#2563eb', margin: '0' }}>{data.title}</p>
-        <p style={style.meta}>{data.contact}</p>
+      <div style={{ width: '100%' }}>
+        {lines.map((line, idx) => {
+          let trimmed = line.trim();
+          if (!trimmed) return <div key={idx} className="h-1" />;
 
-        {/* SUMMARY */}
-        <h2 style={style.heading}>Summary</h2>
-        <p style={style.plainText}>{data.summary}</p>
+          // Wipe out rogue bullet fragments left over by parser splits
+          if (trimmed === '•' || trimmed === '-' || trimmed === '*') return null;
 
-        {/* SKILLS */}
-        <h2 style={style.heading}>Skills</h2>
-        {data.skills.map((s, i) => (
-          <p key={i} style={style.plainText}>
-            <strong>{s.cat}:</strong> {s.val}
-          </p>
-        ))}
+          // Strip pre-existing bullet characters to prevent double rendering
+          let isBulletLine = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*');
+          if (isOriginalBullet) {
+            trimmed = trimmed.substring(1).trim();
+          }
 
-        {/* WORK EXPERIENCE */}
-        <h2 style={style.heading}>Work Experience</h2>
-        {data.experience.map((exp, i) => (
-          <div key={i} className="mb-3" style={{ pageBreakInside: 'avoid' }}>
-            <div className="flex justify-between w-full font-bold" style={style.subHeading}>
-              <span>{exp.role}</span>
-              <span style={{ fontWeight: 'normal' }}>{exp.date}</span>
-            </div>
-            <p style={{ ...style.plainText, fontStyle: 'italic', margin: '0 0 2px 0' }}>{exp.company} — {exp.loc}</p>
-            {exp.bullets.map((b, idx) => (
-              <p key={idx} style={style.bulletText}>• {b}</p>
-            ))}
-          </div>
-        ))}
+          // Rule 1: First continuous text item maps as Main Candidate Name Header
+          if (!hasRenderedHeader && trimmed.length < 45 && !trimmed.includes('|') && !trimmed.includes('@')) {
+            hasRenderedHeader = true;
+            
+            let secondaryMetaRow = '';
+            if (lines[idx + 1] && (lines[idx + 1].includes('|') || lines[idx + 1].includes('@') || lines[idx + 1].includes('Developer') || lines[idx + 1].includes('Fresher'))) {
+              secondaryMetaBlock = lines[idx + 1].trim();
+              lines[idx + 1] = ''; // Absorb cleanly
+            }
 
-        {/* PROJECTS */}
-        <h2 style={style.heading}>Projects</h2>
-        {data.projects.map((proj, i) => (
-          <div key={i} className="mb-3" style={{ pageBreakInside: 'avoid' }}>
-            <div className="flex justify-between w-full font-bold" style={style.subHeading}>
-              <span>{proj.name}</span>
-              <span style={{ fontWeight: 'normal' }}>{proj.date}</span>
-            </div>
-            {proj.bullets.map((b, idx) => (
-              <p key={idx} style={style.bulletText}>• {b}</p>
-            ))}
-          </div>
-        ))}
+            return (
+              <div key={idx} className="w-full" style={{ pageBreakInside: 'avoid' }}>
+                <h1 style={style.name}>{trimmed}</h1>
+                {metaBlock && <p style={style.meta}>{metaBlock}</p>}
+              </div>
+            );
+          }
 
-        {/* EDUCATION */}
-        <h2 style={style.heading}>Education</h2>
-        <div style={{ pageBreakInside: 'avoid' }}>
-          <div className="flex justify-between w-full font-bold" style={style.subHeading}>
-            <span>{data.education.degree}</span>
-            <span style={{ fontWeight: 'normal' }}>{data.education.date}</span>
-          </div>
-          <div className="flex justify-between w-full text-[10.5px] text-slate-700" style={style.plainText}>
-            <span>{data.education.school} — {data.education.loc}</span>
-            <span className="font-bold">{data.education.metrics}</span>
-          </div>
-        </div>
+          // Rule 2: Identify structural sections dynamically
+          const isSectionTitle = trimmed.length < 35 && /^(objective|summary|experience|employment|work history|education|skills|technical skills|projects|languages|certifications|awards|interests)/i.test(trimmed);
+          
+          // Rule 3: Identify roles, companies, and date boundaries cleanly
+          const isMetadataLine = trimmed.length < 95 && (trimmed.includes('|') || trimmed.includes('–') || trimmed.includes('-') && (/\d{4}/.test(trimmed) || /present/i.test(trimmed) || /oct|nov|jun|jul|aug|sept|jan|feb|mar|apr|may/i.test(trimmed)));
 
-        {/* HARD SKILLS / SOFT SKILLS GRID */}
-        <div className="grid grid-cols-2 gap-4 mt-2" style={{ pageBreakInside: 'avoid' }}>
-          <div>
-            <h2 style={style.heading}>Soft Skills</h2>
-            <p style={style.plainText}>{data.softSkills.join('  •  ')}</p>
-          </div>
-          <div>
-            <h2 style={style.heading}>Languages</h2>
-            <p style={style.plainText}>{data.languages.join('  •  ')}</p>
-          </div>
-        </div>
+          if (isSectionTitle) {
+            return <h2 key={idx} style={style.heading}>{trimmed}</h2>;
+          }
+
+          if (isMetadataLine) {
+            if (trimmed.includes('|') && (selectedTemplate === 'tech' || selectedTemplate === 'corporate')) {
+              const elements = trimmed.split('|');
+              const rightElement = elements.pop().trim();
+              const leftElement = elements.join('|').trim();
+              return (
+                <div key={idx} style={style.subHeading} className="flex justify-between items-center w-full font-bold select-none">
+                  <span>{leftElement}</span>
+                  <span className="font-normal font-mono text-[10px] text-slate-600">{rightElement}</span>
+                </div>
+              );
+            }
+            return <h4 key={idx} style={style.subHeading}>{trimmed}</h4>;
+          }
+
+          // Rule 4: Apply Bullet layouts exclusively to details lines (Experience logs, skills blocks, projects items)
+          const isSummaryText = trimmed.length > 120 && (trimmed.toLowerCase().includes('seeking') || trimmed.toLowerCase().includes('enthusiastic') || trimmed.toLowerCase().includes('professional with'));
+
+          if (isBulletLine || (!isSummaryParagraph && trimmed.length > 20 && !isSectionTitle && !isMetadataLine)) {
+            return (
+              <p key={idx} style={style.bulletText} className="page-break-avoid">
+                • {trimmed}
+              </p>
+            );
+          }
+
+          return <p key={idx} style={style.plainText}>{trimmed}</p>;
+        })}
       </div>
     );
   };
